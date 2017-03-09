@@ -58,7 +58,6 @@
 
       !---------- VARIABLES DEFINED IN MOD_MIB ----------
       INODE = 0
-      VIB   = 0.0D0
       SRC   = 0.0D0
       BETA  = 0.0D0; BETAX = 0.0D0; BETAY = 0.0D0
       !TOL_ITYPE = 0.0D0

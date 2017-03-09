@@ -4,10 +4,10 @@
       ! PDE: U_T = (BETA U_X)_X + (BETA U_Y)_Y + F
       !    BETA1=1     INSIDE
       !    BETA2=10    OUTSIDE
-      !    U(X,Y)=SIN(KX)COS(KY)COS(T) INSIDE
-      !          =COS(KX)SIN(KY)COS(T) OUTSIDE
-      !    F=(2*K^2*BETA1*COS(T)-SIN(T))*SIN(KX)COS(KY)     INSIDE
-      !     =(2*K^2*BETA2*COS(T)-SIN(T))*COS(KX)SIN(KY)     OUTSIDE
+      !    U(X,Y)=SIN(KX)COS(KY)+COS(T) INSIDE
+      !          =COS(KX)SIN(KY)+COS(T) OUTSIDE
+      !    F=SIN(T)+2*BETA1*K^2*SIN(KX)COS(KY)     INSIDE
+      !     =SIN(T)+2*BETA1*K^2*COS(KX)SIN(KY)    OUTSIDE
       !
       ! GAMMA: R = A + B*SIN(K*VARPHI)
       !    VARPHI   THE ARC-LENGTH PARAMETER,
@@ -31,7 +31,7 @@
 
       !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!
       !                                                                        !
-      !                                INTERFACE                               !
+      !                           INTERFACE  RELATED                           !
       !                                                                        !
       !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -59,43 +59,6 @@
       RETURN
 
       END FUNCTION SETS
-
-      !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!
-      !                                                                        !
-      !                                EQUATION                                !
-      !                                                                        !
-      !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!
-
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      ! ANALYTICAL --
-      !    GENERATING ANALYTICAL SOLUTION
-      ! ARGUMENTS:
-      !    U  OUT  MATRIX TO STORE EXACT SOLUTION ON ALL GRIDS
-      !    T  IN   CURRENT TIME
-      ! NOTES:
-      !
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      SUBROUTINE ANALYTICAL(U,T)
-
-      REAL :: U(NY,NX),T
-
-      REAL :: CT
-      INTEGER :: IX,IY
-
-      CT = COS(T)
-      DO IY = 1,NY
-         DO IX = 1,NX
-            IF (SETS(XI(IX),YI(IY)) .GT. TOL_SETUP) THEN
-               U(IY,IX) = COS(VK*XI(IX))*SIN(VK*YI(IY))*CT
-            ELSE
-               U(IY,IX) = SIN(VK*XI(IX))*COS(VK*YI(IY))*CT
-            END IF
-         END DO
-      END DO
-
-      RETURN
-
-      END SUBROUTINE ANALYTICAL
 
       !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       ! SETBETA --
@@ -141,7 +104,9 @@
 
       TYPE(LIST_DATA) :: DATA
 
+      !INSIDE BETA
       DATA%BETA1 = 1.0D0
+      !OUTSIDE BETA
       DATA%BETA2 = 1.0D1
 
       RETURN
@@ -187,71 +152,6 @@
 !      RETURN
 !
 !      END FUNCTION IFBETA2
-
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      ! SETSRC --
-      !    ON-GRID SOURCE TERM AT TIME T
-      ! ARGUMENTS:
-      !    T  IN  CURRENT TIME
-      ! NOTES:
-      !
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      SUBROUTINE SETSRC(T)
-
-      REAL :: T
-
-      INTEGER :: IX,IY
-      REAL :: CT
-
-      DO IY=1,NY
-         DO IX=1,NX
-            CT = 2.0D0*VK**2*BETA(IY,IX)*COS(T)-SIN(T)
-            IF (SETS(XI(IX),YI(IY)) .GT. TOL_SETUP) THEN  !OUTSIDE
-               SRC(IY,IX)=CT*COS(VK*XI(IX))*SIN(VK*YI(IY))
-            ELSE                                          !INSIDE
-               SRC(IY,IX)=CT*SIN(VK*XI(IX))*COS(VK*YI(IY))
-            END IF
-         END DO
-      END DO
-
-      RETURN
-
-      END SUBROUTINE SETSRC
-
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      ! SETBC --
-      !    SET AVERAGE BOUNDARY CONDITIONS BETWEEN TIME STEP T AND T+DT
-      ! ARGUMENTS:
-      !    T    IN   CURRENT TIME
-      !    DT   IN   TIME STEP
-      !    UHS  OUT  ON-GRID NUMERICAL SOLUTIONS
-      ! NOTES:
-      !    RESET BOUNDARY CONDITIONS AT T_N      : T = T_N,     DT = 0
-      !                                 T_{N+1/2}: T = T_N,     DT = DT
-      !                                 T_{N+1}  : T = T_{N+1}, DT = 0
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      SUBROUTINE SETBC(T,DT,UHS)
-
-      REAL :: T,DT,UHS(NY,NX)
-
-      REAL :: CT
-      INTEGER :: IX,IY
-
-      CT=(COS(T+DT)+COS(T))/2.0D0
-
-      DO IX=1,NX,NX-1    !FIRST ORDER BOUNDARY CONDITION
-         DO IY=1,NY      !U*=(U^N+ U^{N+1})/2
-            UHS(IY,IX)=COS(VK*XI(IX))*SIN(VK*YI(IY))*CT
-         END DO
-      END DO
-
-      DO IY=1,NY,NY-1
-         DO IX=1,NX
-            UHS(IY,IX)=COS(VK*XI(IX))*SIN(VK*YI(IY))*CT
-         END DO
-      END DO
-
-      END SUBROUTINE SETBC
 
       !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!
       !                                                                        !
@@ -445,6 +345,110 @@
 
       END FUNCTION GETNORMAL
 
+!******************************************************************************************************************!
+
+      !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!
+      !                                                                        !
+      !                            EQUATION RELATED                            !
+      !                                                                        !
+      !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!
+
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      ! ANALYTICAL --
+      !    GENERATING ANALYTICAL SOLUTION
+      ! ARGUMENTS:
+      !    U  OUT  MATRIX TO STORE EXACT SOLUTION ON ALL GRIDS
+      !    T  IN   CURRENT TIME
+      ! NOTES:
+      !
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      SUBROUTINE ANALYTICAL(U,T)
+
+      REAL :: U(NY,NX),T
+
+      REAL :: CT
+      INTEGER :: IX,IY
+
+      CT = COS(T)
+      DO IY = 1,NY
+         DO IX = 1,NX
+            IF (SETS(XI(IX),YI(IY)) .GT. TOL_SETUP) THEN
+               U(IY,IX) = COS(VK*XI(IX))*SIN(VK*YI(IY))+CT
+            ELSE
+               U(IY,IX) = SIN(VK*XI(IX))*COS(VK*YI(IY))+CT
+            END IF
+         END DO
+      END DO
+
+      RETURN
+
+      END SUBROUTINE ANALYTICAL
+
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      ! SETSRC --
+      !    ON-GRID SOURCE TERM AT TIME T
+      ! ARGUMENTS:
+      !    T  IN  CURRENT TIME
+      ! NOTES:
+      !
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      SUBROUTINE SETSRC(T)
+
+      REAL :: T
+
+      INTEGER :: IX,IY
+      REAL :: CT
+
+      DO IY=1,NY
+         DO IX=1,NX
+            CT = -SIN(T)
+            IF (SETS(XI(IX),YI(IY)) .GT. TOL_SETUP) THEN  !OUTSIDE
+               SRC(IY,IX)=CT+2*BETA(IY,IX)*VK**2*COS(VK*XI(IX))*SIN(VK*YI(IY))
+            ELSE                                          !INSIDE
+               SRC(IY,IX)=CT+2*BETA(IY,IX)*VK**2*SIN(VK*XI(IX))*COS(VK*YI(IY))
+            END IF
+         END DO
+      END DO
+
+      RETURN
+
+      END SUBROUTINE SETSRC
+
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      ! SETBC --
+      !    SET AVERAGE BOUNDARY CONDITIONS BETWEEN TIME STEP T AND T+DT
+      ! ARGUMENTS:
+      !    T    IN   CURRENT TIME
+      !    DT   IN   TIME STEP
+      !    UHS  OUT  ON-GRID NUMERICAL SOLUTIONS
+      ! NOTES:
+      !    RESET BOUNDARY CONDITIONS AT T_N      : T = T_N,     DT = 0
+      !                                 T_{N+1/2}: T = T_N,     DT = DT
+      !                                 T_{N+1}  : T = T_{N+1}, DT = 0
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      SUBROUTINE SETBC(T,DT,UHS)
+
+      REAL :: T,DT,UHS(NY,NX)
+
+      REAL :: CT
+      INTEGER :: IX,IY
+
+      CT=(COS(T+DT)+COS(T))/2.0D0
+
+      DO IX=1,NX,NX-1    !FIRST ORDER BOUNDARY CONDITION
+         DO IY=1,NY      !U*=(U^N+ U^{N+1})/2
+            UHS(IY,IX)=COS(VK*XI(IX))*SIN(VK*YI(IY))+CT
+         END DO
+      END DO
+
+      DO IY=1,NY,NY-1
+         DO IX=1,NX
+            UHS(IY,IX)=COS(VK*XI(IX))*SIN(VK*YI(IY))+CT
+         END DO
+      END DO
+
+      END SUBROUTINE SETBC
+
       !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!
       !                                                                        !
       !                     INTERFACE JUMP CONDITIONS                          !
@@ -470,7 +474,7 @@
       XINF  = DATA%X
       YINF  = DATA%Y
 
-      DATA%JUMP(1) = (COS(VK*XINF)*SIN(VK*YINF)-SIN(VK*XINF)*COS(VK*YINF))*COS(T)
+      DATA%JUMP(1) = COS(VK*XINF)*SIN(VK*YINF)-SIN(VK*XINF)*COS(VK*YINF)
 
       RETURN
 
@@ -498,8 +502,8 @@
       BETA1 = DATA%BETA1
       BETA2 = DATA%BETA2
 
-      DATA%JUMP(2) = (SIN(VK*XINF)*SIN(VK*YINF)*VK*(BETA1*SIN(THETA)-BETA2*COS(THETA))+&
-                    &COS(VK*XINF)*COS(VK*YINF)*VK*(BETA2*SIN(THETA)-BETA1*COS(THETA)))*COS(T)
+      DATA%JUMP(2) = VK*SIN(VK*XINF)*SIN(VK*YINF)*(BETA1*SIN(THETA)-BETA2*COS(THETA))&
+                   &+VK*COS(VK*XINF)*COS(VK*YINF)*(BETA2*SIN(THETA)-BETA1*COS(THETA))
 
       RETURN
 
@@ -525,7 +529,7 @@
       YINF  = DATA%Y
       THETA = DATA%THETA
 
-      DATA%JUMP(3) = (COS(VK*XINF)*COS(VK*YINF)+SIN(VK*XINF)*SIN(VK*YINF))*VK*(COS(THETA)+SIN(THETA))*COS(T)
+      DATA%JUMP(3) = VK*(COS(THETA)+SIN(THETA))*(SIN(VK*XINF)*SIN(VK*YINF)+COS(VK*XINF)*COS(VK*YINF))
 
       RETURN
 
@@ -554,8 +558,8 @@
       BETA1 = DATA%BETA1
       BETA2 = DATA%BETA2
 
-      DATA%JUMP(4) = (-VK*BETA2*SIN(VK*XINF)*SIN(VK*YINF)-VK*BETA1*COS(VK*XINF)*COS(VK*YINF))*COS(T+DT)
-      DATA%JUMP(5) = (-VK*BETA2*SIN(VK*XINF)*SIN(VK*YINF)-VK*BETA1*COS(VK*XINF)*COS(VK*YINF))*COS(T)
+      DATA%JUMP(4) = -VK*BETA2*SIN(VK*XINF)*SIN(VK*YINF)-VK*BETA1*COS(VK*XINF)*COS(VK*YINF)
+      DATA%JUMP(5) = -VK*BETA2*SIN(VK*XINF)*SIN(VK*YINF)-VK*BETA1*COS(VK*XINF)*COS(VK*YINF)
 
       RETURN
 
@@ -584,8 +588,8 @@
       BETA1 = DATA%BETA1
       BETA2 = DATA%BETA2
 
-      DATA%JUMP(4) = (VK*BETA2*COS(VK*XINF)*COS(VK*YINF)+VK*BETA1*SIN(VK*XINF)*SIN(VK*YINF))*COS(T+DT)
-      DATA%JUMP(5) = (VK*BETA2*COS(VK*XINF)*COS(VK*YINF)+VK*BETA1*SIN(VK*XINF)*SIN(VK*YINF))*COS(T)
+      DATA%JUMP(4) = VK*BETA2*COS(VK*XINF)*COS(VK*YINF)+VK*BETA1*SIN(VK*XINF)*SIN(VK*YINF)
+      DATA%JUMP(5) = VK*BETA2*COS(VK*XINF)*COS(VK*YINF)+VK*BETA1*SIN(VK*XINF)*SIN(VK*YINF)
 
       RETURN
 
@@ -612,7 +616,7 @@
 
          REAL :: X,Y,T,THETA,UTAU_MINUS
 
-         UTAU_MINUS = -VK*COS(T)*( SIN(THETA)*COS(VK*X)*COS(VK*Y) + COS(THETA)*SIN(VK*X)*SIN(VK*Y) )
+         UTAU_MINUS = -VK*SIN(THETA)*COS(VK*X)*COS(VK*Y)-VK*COS(THETA)*SIN(VK*X)*SIN(VK*Y)
 
          RETURN
 
@@ -633,7 +637,7 @@
 
          REAL :: X,Y,T,THETA,UTAU_PLUS
 
-         UTAU_PLUS = VK*COS(T)*( SIN(THETA)*SIN(VK*X)*SIN(VK*Y) + COS(THETA)*COS(VK*X)*COS(VK*Y) )
+         UTAU_PLUS = VK*SIN(THETA)*SIN(VK*X)*SIN(VK*Y)+VK*COS(THETA)*COS(VK*X)*COS(VK*Y)
 
          RETURN
 
@@ -654,9 +658,9 @@
          REAL :: X,Y,T,UVAL
 
          IF (SETS(X,Y) .GT. TOL_SETUP) THEN
-            UVAL = COS(VK*X)*SIN(VK*Y)*COS(T)
+            UVAL = COS(VK*X)*SIN(VK*Y)+COS(T)
          ELSE
-            UVAL = SIN(VK*X)*COS(VK*Y)*COS(T)
+            UVAL = SIN(VK*X)*COS(VK*Y)+COS(T)
          END IF
 
          RETURN
@@ -677,7 +681,7 @@
 
          REAL :: X,Y,T,UVAL_MINUS
 
-         UVAL_MINUS = SIN(VK*X)*COS(VK*Y)*COS(T)
+         UVAL_MINUS = SIN(VK*X)*COS(VK*Y)+COS(T)
 
          RETURN
 
@@ -698,7 +702,7 @@
 
          REAL :: X,Y,T,UVAL_PLUS
 
-         UVAL_PLUS = COS(VK*X)*SIN(VK*Y)*COS(T)
+         UVAL_PLUS = COS(VK*X)*SIN(VK*Y)+COS(T)
 
          RETURN
 
@@ -724,9 +728,9 @@
       DO IY = 1,NY
          DO IX = 1,NX
             IF (SETS(XI(IX),YI(IY)) .GT. TOL_SETUP) THEN
-               U(IY,IX) = SIN(VK*XI(IX))*COS(VK*YI(IY))*CT
+               U(IY,IX) = SIN(VK*XI(IX))*COS(VK*YI(IY))+CT
             ELSE
-               U(IY,IX) = COS(VK*XI(IX))*SIN(VK*YI(IY))*CT
+               U(IY,IX) = COS(VK*XI(IX))*SIN(VK*YI(IY))+CT
             END IF
          END DO
       END DO

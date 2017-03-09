@@ -29,13 +29,6 @@
          END DO
       END DO
 
-      WRITE(100,"(A)") "VIB(NY,NX):"
-      DO IY=1,NY
-         DO IX=1,NX
-            WRITE(100,"(2(A,I4),A,F12.6)"), "   VIB(",IY,",",IX,") = ",VIB(IY,IX)
-         END DO
-      END DO
-
       WRITE(100,"(A)") "BETA(NY,NX):"
       DO IY=1,NY
          DO IX=1,NX

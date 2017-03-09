@@ -35,9 +35,6 @@
             ELSE
                INODE(IY,IX) = -1 !INSIDE (INCLUDE ON THE INTERFACE)
             END IF
-
-            VIB(IY,IX) = 1.0D0/BETA(IY,IX)
-
          END DO
       END DO
 

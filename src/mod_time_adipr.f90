@@ -179,7 +179,7 @@
 
          !----- STEP II: ADD SECOND PART OF RHS: +(U^N+DT/2 SRC^{N+1/2})/BETA -----!
          DO IY=2,NY-1
-            UHS(IY,IX)=UHS(IY,IX)+(UH(IY,IX)+DT/2.0D0*SRC(IY,IX))*VIB(IY,IX)
+            UHS(IY,IX)=UHS(IY,IX)+(UH(IY,IX)+DT/2.0D0*SRC(IY,IX))/BETA(IY,IX)
          END DO
 
          !----- STEP III: ADD THIRD PART OF RHS: + DT/2 BETA_Y/BETA D_Y U^N -----!
@@ -338,9 +338,9 @@
          !----- STEP V-1: GENERATE LHS MATRIX: (1/BETA-DT/2*D_XX-DT/2*BETA_X/BETA*D_X) U* WITHOUT MIB -----!
          A(1)=0.0D0; B(1)=1.0D0; C(1)=0.0D0 
          DO IX=2,NX-1
-            A(IX)=-(VDE2(-1)*DT/2.0D0+VDE1(-1)*DT/2.0D0*BETAX(IY,IX))
-            B(IX)=VIB(IY,IX)-(VDE2(0)*DT/2.0D0+VDE1(0)*DT/2.0D0*BETAX(IY,IX))
-            C(IX)=-(VDE2(1)*DT/2.0D0+VDE1(1)*DT/2.0D0*BETAX(IY,IX))
+            A(IX) = -(VDE2(-1)*DT/2.0D0+VDE1(-1)*DT/2.0D0*BETAX(IY,IX))
+            B(IX) = 1.0D0/BETA(IY,IX)-(VDE2(0)*DT/2.0D0+VDE1(0)*DT/2.0D0*BETAX(IY,IX))
+            C(IX) = -(VDE2(1)*DT/2.0D0+VDE1(1)*DT/2.0D0*BETAX(IY,IX))
          END DO
          A(NX)=0.0D0; B(NX)=1.0D0; C(NX)=0.0D0
 
@@ -368,7 +368,7 @@
                   IX=DATA%LGRD !APPROXIMATE IX
                   !USE FP2
                   ROW(1,1)=-(WTYPE2(2,-1)*DT/2.0D0+WTYPE1(2,-1)*DT/2.0D0*BETAX(IY,IX))
-                  ROW(1,2)=VIB(IY,IX)-(WTYPE2(2,0)*DT/2.0D0+WTYPE1(2,0)*DT/2.0D0*BETAX(IY,IX))
+                  ROW(1,2)=1.0D0/BETA(IY,IX)-(WTYPE2(2,0)*DT/2.0D0+WTYPE1(2,0)*DT/2.0D0*BETAX(IY,IX))
                   DO K=1,4
                      ROW(1,K)=ROW(1,K)-(WTYPE2(2,1)*DT/2.0D0+WTYPE1(2,1)*DT/2.0D0*BETAX(IY,IX))*DATA%WIJ(2,K)
                   END DO
@@ -377,7 +377,7 @@
 
                   IX=IX+1 !APPROXIMATE IX+1
                   !USE FP1
-                  ROW(2,3)=VIB(IY,IX)-(WTYPE2(1,0)*DT/2.0D0+WTYPE1(1,0)*DT/2.0D0*BETAX(IY,IX))
+                  ROW(2,3)=1.0D0/BETA(IY,IX)-(WTYPE2(1,0)*DT/2.0D0+WTYPE1(1,0)*DT/2.0D0*BETAX(IY,IX))
                   ROW(2,4)=-(WTYPE2(1,1)*DT/2.0D0+WTYPE1(1,1)*DT/2.0D0*BETAX(IY,IX))
                   DO K=1,4
                      ROW(2,K)=ROW(2,K)-(WTYPE2(1,-1)*DT/2.0D0+WTYPE1(1,-1)*DT/2.0D0*BETAX(IY,IX))*DATA%WIJ(1,K)
@@ -412,7 +412,7 @@
                   END DO
                   !IX+1 CROSS INTERFACE, USE FP2 
                   ROW2(1,1)=-(WTYPEC2(-1)*DT/2.0D0+WTYPEC1(-1)*DT/2.0D0*BETAX(IY,IX))
-                  ROW2(1,2)=VIB(IY,IX)-(WTYPEC2(0)*DT/2.0D0+WTYPEC1(0)*DT/2.0D0*BETAX(IY,IX))
+                  ROW2(1,2)=1.0D0/BETA(IY,IX)-(WTYPEC2(0)*DT/2.0D0+WTYPEC1(0)*DT/2.0D0*BETAX(IY,IX))
                   I=2                              !USE FP2, INDEX USED FOR FP WIJ2(:,:)
                   DO K=1,5
                      ROW2(1,K)=ROW2(1,K)-(WTYPEC2(1)*DT/2.0D0+WTYPEC1(1)*DT/2.0D0*BETAX(IY,IX))*DATAL%WIJ2(I,K)
@@ -438,7 +438,7 @@
                         WTYPEC2(J)=WTYPE2(2,J)
                      END DO
                   END IF
-                  ROW2(2,3)=VIB(IY,IX)-(WTYPEC2(0)*DT/2.0D0+WTYPEC1(0)*DT/2.0D0*BETAX(IY,IX))
+                  ROW2(2,3)=1.0D0/BETA(IY,IX)-(WTYPEC2(0)*DT/2.0D0+WTYPEC1(0)*DT/2.0D0*BETAX(IY,IX))
                   !IX-1 CROSS INTERFACE, USE FP1
                   I=1                              !USE FP1, INDEX USED FOR FP WIJ2(:,:)
                   DO K=1,5
@@ -465,7 +465,7 @@
                      WTYPEC2(J)=WTYPE2(1,J)
                   END DO
                   !IX-1 CROSS INTERFACE, USE FP2 
-                  ROW2(3,4)=VIB(IY,IX)-(WTYPEC2(0)*DT/2.0D0+WTYPEC1(0)*DT/2.0D0*BETAX(IY,IX))
+                  ROW2(3,4)=1.0D0/BETA(IY,IX)-(WTYPEC2(0)*DT/2.0D0+WTYPEC1(0)*DT/2.0D0*BETAX(IY,IX))
                   ROW2(3,5)=-(WTYPEC2(1)*DT/2.0D0+WTYPEC1(1)*DT/2.0D0*BETAX(IY,IX))                  
                   I=2                              !USE FP2, INDEX USED FOR FP WIJ2(:,:)
                   DO K=1,5
@@ -652,7 +652,7 @@
 
          !----- STEP II: ADD SECOND PART OF RHS: +(U*+DT/2 SRC^{N+1/2})/BETA -----!
          DO IX=2,NX-1
-            UH(IY,IX)=UH(IY,IX)+(UHS(IY,IX)+DT/2.0D0*SRC(IY,IX))*VIB(IY,IX)
+            UH(IY,IX)=UH(IY,IX)+(UHS(IY,IX)+DT/2.0D0*SRC(IY,IX))*1.0D0/BETA(IY,IX)
          END DO
 
          !----- STEP III: ADD THIRD PART OF RHS: + DT/2 BETA_X/BETA D_X U* -----!
@@ -811,7 +811,7 @@
          A(1)=0.0D0; B(1)=1.0D0; C(1)=0.0D0 
          DO IY=2,NY-1
             A(IY)=-(VDE2(-1)*DT/2.0D0+VDE1(-1)*DT/2.0D0*BETAY(IY,IX))
-            B(IY)=VIB(IY,IX)-(VDE2(0)*DT/2.0D0+VDE1(0)*DT/2.0D0*BETAY(IY,IX))
+            B(IY)=1.0D0/BETA(IY,IX)-(VDE2(0)*DT/2.0D0+VDE1(0)*DT/2.0D0*BETAY(IY,IX))
             C(IY)=-(VDE2(1)*DT/2.0D0+VDE1(1)*DT/2.0D0*BETAY(IY,IX))
          END DO
          A(NY)=0.0D0; B(NY)=1.0D0; C(NY)=0.0D0
@@ -840,7 +840,7 @@
                   IY=DATA%LGRD  !APPROXIMATE IY
                   !USE FP2
                   ROW(1,1)=-(WTYPE2(2,-1)*DT/2.0D0+WTYPE1(2,-1)*DT/2.0D0*BETAY(IY,IX))
-                  ROW(1,2)=VIB(IY,IX)-(WTYPE2(2,0)*DT/2.0D0+WTYPE1(2,0)*DT/2.0D0*BETAY(IY,IX))
+                  ROW(1,2)=1.0D0/BETA(IY,IX)-(WTYPE2(2,0)*DT/2.0D0+WTYPE1(2,0)*DT/2.0D0*BETAY(IY,IX))
                   DO K=1,4
                      ROW(1,K)=ROW(1,K)-(WTYPE2(2,1)*DT/2.0D0+WTYPE1(2,1)*DT/2.0D0*BETAY(IY,IX))*DATA%WIJ(2,K)
                   END DO
@@ -849,7 +849,7 @@
 
                   IY=IY+1      !APPROXIMATE IY+1
                   !USE FP1
-                  ROW(2,3)=VIB(IY,IX)-(WTYPE2(1,0)*DT/2.0D0+WTYPE1(1,0)*DT/2.0D0*BETAY(IY,IX))
+                  ROW(2,3)=1.0D0/BETA(IY,IX)-(WTYPE2(1,0)*DT/2.0D0+WTYPE1(1,0)*DT/2.0D0*BETAY(IY,IX))
                   ROW(2,4)=-(WTYPE2(1,1)*DT/2.0D0+WTYPE1(1,1)*DT/2.0D0*BETAY(IY,IX))
                   DO K=1,4
                      ROW(2,K)=ROW(2,K)-(WTYPE2(1,-1)*DT/2.0D0+WTYPE1(1,-1)*DT/2.0D0*BETAY(IY,IX))*DATA%WIJ(1,K)
@@ -884,7 +884,7 @@
                   END DO
                   !IY+1 CROSS INTERFACE, USE FP2 
                   ROW2(1,1)=-(WTYPEC2(-1)*DT/2.0D0+WTYPEC1(-1)*DT/2.0D0*BETAY(IY,IX))
-                  ROW2(1,2)=VIB(IY,IX)-(WTYPEC2(0)*DT/2.0D0+WTYPEC1(0)*DT/2.0D0*BETAY(IY,IX))
+                  ROW2(1,2)=1.0D0/BETA(IY,IX)-(WTYPEC2(0)*DT/2.0D0+WTYPEC1(0)*DT/2.0D0*BETAY(IY,IX))
                   I=2                              !USE FP2, INDEX USED FOR FP WIJ2(:,:)
                   DO K=1,5
                      ROW2(1,K)=ROW2(1,K)-(WTYPEC2(1)*DT/2.0D0+WTYPEC1(1)*DT/2.0D0*BETAY(IY,IX))*DATAL%WIJ2(I,K)
@@ -910,7 +910,7 @@
                         WTYPEC2(J)=WTYPE2(2,J)
                      END DO
                   END IF    
-                  ROW2(2,3)=VIB(IY,IX)-(WTYPEC2(0)*DT/2.0D0+WTYPEC1(0)*DT/2.0D0*BETAY(IY,IX))
+                  ROW2(2,3)=1.0D0/BETA(IY,IX)-(WTYPEC2(0)*DT/2.0D0+WTYPEC1(0)*DT/2.0D0*BETAY(IY,IX))
                   I=1                              !INDEX USED FOR FP WIJ2(:,:)  
                   !IY-1 CROSS INTERFACE, USE FP1 
                   DO K=1,5
@@ -936,7 +936,7 @@
                      WTYPEC2(J)=WTYPE2(1,J)
                   END DO
                   !IY-1 CROSS INTERFACE, USE FP2 
-                  ROW2(3,4)=VIB(IY,IX)-(WTYPEC2(0)*DT/2.0D0+WTYPEC1(0)*DT/2.0D0*BETAY(IY,IX))
+                  ROW2(3,4)=1.0D0/BETA(IY,IX)-(WTYPEC2(0)*DT/2.0D0+WTYPEC1(0)*DT/2.0D0*BETAY(IY,IX))
                   ROW2(3,5)=-(WTYPEC2(1)*DT/2.0D0+WTYPEC1(1)*DT/2.0D0*BETAY(IY,IX))                  
                   I=2                              !INDEX USED FOR FP WIJ2(:,:)
                   DO K=1,5

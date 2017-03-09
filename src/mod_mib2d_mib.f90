@@ -335,13 +335,47 @@
       CALL LUDCMP(AE,NE,NE,INDEXE,DE,VVE)
       CALL LUBKSB(AE,NE,NE,INDEXE,BE)
 
-      DO I=1,M !EMAT REPRESENTS FICTITIOUS VALUES IN TERMS OF REGULAR ONES
+      !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      !          ABNORMAL ORDER TO STORE FP
+      !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      !GO TO 100                            !BLOCK COMMENT ON THE FOLLOWING CODES
+      DO I=1,M 
          DO J=1,ME
             EMAT(I,J)=BE((I-1)*ME+J)
             DATAL%WIJ2(I,J)=EMAT(I,J)
             DATAR%WIJ2(I,J)=EMAT(I,J)
          END DO
       END DO
+      !100 CONTINUE                         !BLOCK COMMENT ON THE FOLLOWING CODES
+
+      !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      !          LEFT TO RIGHT ORDER TO STORE FP
+      !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      GO TO 100                            !BLOCK COMMENT ON THE FOLLOWING CODES
+      DO I=1,M 
+         DO J=1,ME
+            EMAT(I,J)=BE((I-1)*ME+J)
+         END DO
+      END DO
+      IF (DATAR%ITYPE .EQ. 2) THEN         !CLOSER TO RIGHT INTERFACE     
+         DO I=1,M 
+            DO J=1,ME
+               DATAL%WIJ2(I,J)=EMAT(I,J)
+               DATAR%WIJ2(I,J)=EMAT(I,J)
+            END DO
+         END DO
+      ELSE                                 !CLOSER TO LEFT INTERFACE  
+         DATAL%WIJ2(1,J)=EMAT(4,J)
+         DATAR%WIJ2(1,J)=EMAT(4,J)
+         DO I=1,M-1 
+            DO J=1,ME
+               DATAL%WIJ2(I+1,J)=EMAT(I,J)
+               DATAR%WIJ2(I+1,J)=EMAT(I,J)
+            END DO
+         END DO
+      END IF
+      100 CONTINUE                         !BLOCK COMMENT ON THE FOLLOWING CODES
+
 
       DEALLOCATE(AE,BE,VVE,INDEXE,WEI,WEI1,WEI2,STAT=IERR)
 

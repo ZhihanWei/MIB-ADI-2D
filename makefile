@@ -15,10 +15,9 @@ LIBS     = libs/libarpack.a libs/libslatec.a
 #                    code setups                       #
 #             EXAMPLE: 1-7; SOLVER: 1-4                #
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-EXAMPLE  = 5
+EXAMPLE  = 6
 SOLVER   = 2
 DT       = 1.0E-6
-NX       = 21
 PROGRAM  = mib2d_e$(EXAMPLE)s$(SOLVER)
 
 #++++++++++++ host and compiler selection +++++++++++++#
