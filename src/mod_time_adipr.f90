@@ -104,12 +104,18 @@
                   DO J=-1,1
                      WTYPE(J)=WTYPE2(2,J)
                   END DO
-                  !IY+1 CROSS INTERFACE, USE FP2 
+                  !IY+1 CROSS INTERFACE
                   SUM=0.0D0
                   DO J=-1,0
                      SUM=SUM+WTYPE(J)*UH(IY+J,IX)
                   END DO
-                  I=2                              !USE FP2, INDEX USED FOR FP WIJ2(:,:)
+                  
+                  IF (DATAR%ITYPE .EQ. 2) THEN  !RIGHT INTERFACE TYPE, FP2
+                     I=2            
+                  ELSE                          !LEFT ITNERFACE TYPE, FP3
+                     I=3
+                  END IF
+
                   DO K=1,5
                      SUM=SUM+WTYPE(1)*UH(DATAL%LGRD-2+K,IX)*DATAL%WIJ2(I,K)
                   END DO
@@ -118,21 +124,22 @@
                   UHS(IY,IX)=SUM*DT/2.0D0
                   
                   IY=IY+1       !APPROXIMATE IY+1
-                  !DETERMINE USE WHICH INTERFACE DATA APPROXIMATE THE MIDDLE POINT, IY+1
-                  IF (ABS(DATAL%ITYPE) .LT. 2) THEN              !USE LEFT INTERFACE WEIGHTS
+                  !DETERMINE WHICH INTERFACE IS USED FOR DATA APPROXIMATION AT THE MIDDLE POINT, IY+1
+                  IF (DATAR%ITYPE .EQ. 2) THEN                   !USE LEFT INTERFACE WEIGHTS
                      CALL GETWTYPE(DATAL%ITYPE,2,WTYPE2,2)    
                      DO J=-1,1
                         WTYPE(J)=WTYPE2(1,J)
-                     END DO            
+                     END DO
+                     I=1                                         !START WITH FP1       
                   ELSE                                           !USE RIGHT INTERFACE WEIGHTS
                      CALL GETWTYPE(DATAR%ITYPE,2,WTYPE2,2)    
                      DO J=-1,1
                         WTYPE(J)=WTYPE2(2,J)
-                     END DO        
+                     END DO  
+                     I=2                                         !START WITH FP2  
                   END IF                                
-                  !IY-1 CROSS INTERFACE, USE FP1 
-                  SUM=0.0D0                  
-                  I=1                              !USE FP1, INDEX USED FOR FP WIJ2(:,:)                 
+                  !IY-1 CROSS INTERFACE
+                  SUM=0.0D0                               
                   DO K=1,5
                      SUM=SUM+WTYPE(-1)*UH(DATAL%LGRD-2+K,IX)*DATAL%WIJ2(I,K)
                   END DO
@@ -140,7 +147,7 @@
                                     +UJPR*DATAR%WIJ2(I,8)+BUXJPR*DATAR%WIJ2(I,9))
                   !IY, NO FP
                   SUM=SUM+WTYPE(0)*UH(IY,IX)
-                  !IY+1 CROSS INTERFACE, USE FP3                  
+                  !IY+1 CROSS INTERFACE                 
                   I=I+2                 
                   DO K=1,5
                      SUM=SUM+WTYPE(1)*UH(DATAL%LGRD-2+K,IX)*DATAL%WIJ2(I,K)
@@ -154,12 +161,18 @@
                   DO J=-1,1
                      WTYPE(J)=WTYPE2(1,J)
                   END DO
-                  !IY-1 CROSS INTERFACE, USE FP2
+                  !IY-1 CROSS INTERFACE
                   SUM=0.0D0
                   DO J=0,1
                      SUM=SUM+WTYPE(J)*UH(IY+J,IX)
                   END DO
-                  I=2                              !USE FP2, INDEX USED FOR FP WIJ2(:,:)
+                  
+                  IF (DATAR%ITYPE .EQ. 2) THEN  !RIGHT INTERFACE TYPE, FP2
+                     I=2            
+                  ELSE                          !LEFT ITNERFACE TYPE, FP3
+                     I=3
+                  END IF
+                  
                   DO K=1,5
                      SUM=SUM+WTYPE(-1)*UH(DATAL%LGRD-2+K,IX)*DATAL%WIJ2(I,K)
                   END DO
@@ -258,7 +271,13 @@
                   DO J=-1,0
                      SUM=SUM+WTYPE(J)*UH(IY+J,IX)
                   END DO
-                  I=2                              !USE FP2, INDEX USED FOR FP WIJ2(:,:)
+                  
+                  IF (DATAR%ITYPE .EQ. 2) THEN  !RIGHT INTERFACE TYPE, FP2
+                     I=2            
+                  ELSE                          !LEFT ITNERFACE TYPE, FP3
+                     I=3
+                  END IF
+
                   DO K=1,5
                      SUM=SUM+WTYPE(1)*UH(DATAL%LGRD-2+K,IX)*DATAL%WIJ2(I,K)
                   END DO
@@ -267,21 +286,22 @@
                   UHS2(IY,IX)=SUM*(DT/2.0D0)*BETAY(IY,IX)
                   
                   IY=IY+1       !APPROXIMATE IY+1
-                  !DETERMINE USE WHICH INTERFACE DATA APPROXIMATE THE MIDDLE POINT, IY+1
-                  IF (ABS(DATAL%ITYPE) .LT. 2) THEN             !USE LEFT INTERFACE WEIGHTS 
-                     CALL GETWTYPE(DATAL%ITYPE,2,WTYPE1,2)    
+                  !DETERMINE WHICH INTERFACE IS USED FOR DATA APPROXIMATION AT THE MIDDLE POINT, IY+1
+                  IF (DATAR%ITYPE .EQ. 2) THEN                   !USE LEFT INTERFACE WEIGHTS
+                     CALL GETWTYPE(DATAL%ITYPE,2,WTYPE2,2)    
                      DO J=-1,1
-                        WTYPE(J)=WTYPE1(1,J)
-                     END DO            
-                  ELSE                                          !USE RIGHT INTERFACE WEIGHTS 
-                     CALL GETWTYPE(DATAR%ITYPE,2,WTYPE1,2)    
+                        WTYPE(J)=WTYPE2(1,J)
+                     END DO
+                     I=1                                         !START WITH FP1       
+                  ELSE                                           !USE RIGHT INTERFACE WEIGHTS
+                     CALL GETWTYPE(DATAR%ITYPE,2,WTYPE2,2)    
                      DO J=-1,1
-                        WTYPE(J)=WTYPE1(2,J)
-                     END DO        
-                  END IF                                
-                  !IY-1 CROSS INTERFACE, USE FP1 
-                  SUM=0.0D0                  
-                  I=1                              !USE FP1, INDEX USED FOR FP WIJ2(:,:)                  
+                        WTYPE(J)=WTYPE2(2,J)
+                     END DO  
+                     I=2                                         !START WITH FP2  
+                  END IF                              
+                  !IY-1 CROSS INTERFACE
+                  SUM=0.0D0                                  
                   DO K=1,5
                      SUM=SUM+WTYPE(-1)*UH(DATAL%LGRD-2+K,IX)*DATAL%WIJ2(I,K)
                   END DO
@@ -289,7 +309,7 @@
                                     +UJPR*DATAR%WIJ2(I,8)+BUXJPR*DATAR%WIJ2(I,9))
                   !IY, NO FP
                   SUM=SUM+WTYPE(0)*UH(IY,IX)
-                  !IY+1 CROSS INTERFACE, USE FP3                  
+                  !IY+1 CROSS INTERFACE,                
                   I=I+2                 
                   DO K=1,5
                      SUM=SUM+WTYPE(1)*UH(DATAL%LGRD-2+K,IX)*DATAL%WIJ2(I,K)
@@ -303,12 +323,18 @@
                   DO J=-1,1
                      WTYPE(J)=WTYPE1(1,J)
                   END DO
-                  !IY-1 CROSS INTERFACE, USE FP2 
+                  !IY-1 CROSS INTERFACE
                   SUM=0.0D0
                   DO J=0,1
                      SUM=SUM+WTYPE(J)*UH(IY+J,IX)
                   END DO
-                  I=2                              !USE FP2, INDEX USED FOR FP WIJ2(:,:)
+                  
+                  IF (DATAR%ITYPE .EQ. 2) THEN  !RIGHT INTERFACE TYPE, FP2
+                     I=2            
+                  ELSE                          !LEFT ITNERFACE TYPE, FP3
+                     I=3
+                  END IF
+                  
                   DO K=1,5
                      SUM=SUM+WTYPE(-1)*UH(DATAL%LGRD-2+K,IX)*DATAL%WIJ2(I,K)
                   END DO
@@ -413,7 +439,13 @@
                   !IX+1 CROSS INTERFACE, USE FP2 
                   ROW2(1,1)=-(WTYPEC2(-1)*DT/2.0D0+WTYPEC1(-1)*DT/2.0D0*BETAX(IY,IX))
                   ROW2(1,2)=1.0D0/BETA(IY,IX)-(WTYPEC2(0)*DT/2.0D0+WTYPEC1(0)*DT/2.0D0*BETAX(IY,IX))
-                  I=2                              !USE FP2, INDEX USED FOR FP WIJ2(:,:)
+                  
+                  IF (DATAR%ITYPE .EQ. 2) THEN  !RIGHT INTERFACE TYPE, FP2
+                     I=2            
+                  ELSE                          !LEFT ITNERFACE TYPE, FP3
+                     I=3
+                  END IF
+
                   DO K=1,5
                      ROW2(1,K)=ROW2(1,K)-(WTYPEC2(1)*DT/2.0D0+WTYPEC1(1)*DT/2.0D0*BETAX(IY,IX))*DATAL%WIJ2(I,K)
                   END DO
@@ -422,14 +454,15 @@
                                         UJPR*DATAR%WIJ2(I,8)+BUXJPR*DATAR%WIJ2(I,9))
 
                   IX=IX+1        !APPROXIMATE IX+1
-                  !DETERMINE USE WHICH INTERFACE DATA APPROXIMATE THE MIDDLE POINT, IY+1
-                  IF (ABS(DATAL%ITYPE) .LT. 2) THEN            !USE LEFT INTERFACE WEIGHTS
+                  !DETERMINE WHICH INTERFACE IS USED FOR DATA APPROXIMATION AT THE MIDDLE POINT, IY+1
+                  IF (DATAR%ITYPE .EQ. 2) THEN                 !USE LEFT INTERFACE WEIGHTS
                      CALL GETWTYPE(DATAL%ITYPE,1,WTYPE1,2)  
                      CALL GETWTYPE(DATAL%ITYPE,2,WTYPE2,2)
                      DO J=-1,1
                         WTYPEC1(J)=WTYPE1(1,J)
                         WTYPEC2(J)=WTYPE2(1,J)
                      END DO
+                     I=1                                       !START WITH FP1
                   ELSE                                         !USE RIGHT INTERFACE WEIGHTS
                      CALL GETWTYPE(DATAR%ITYPE,1,WTYPE1,2)    
                      CALL GETWTYPE(DATAR%ITYPE,2,WTYPE2,2)
@@ -437,10 +470,10 @@
                         WTYPEC1(J)=WTYPE1(2,J)
                         WTYPEC2(J)=WTYPE2(2,J)
                      END DO
+                     I=2                                       !START WITH FP2
                   END IF
                   ROW2(2,3)=1.0D0/BETA(IY,IX)-(WTYPEC2(0)*DT/2.0D0+WTYPEC1(0)*DT/2.0D0*BETAX(IY,IX))
-                  !IX-1 CROSS INTERFACE, USE FP1
-                  I=1                              !USE FP1, INDEX USED FOR FP WIJ2(:,:)
+                  !IX-1 CROSS INTERFACE
                   DO K=1,5
                      ROW2(2,K)=ROW2(2,K)-(WTYPEC2(-1)*DT/2.0D0+WTYPEC1(-1)*DT/2.0D0*BETAX(IY,IX))*DATAL%WIJ2(I,K)
                   END DO
@@ -448,7 +481,7 @@
                                        (UJPL*DATAL%WIJ2(I,6)+BUXJPL*DATAL%WIJ2(I,7)+&
                                         UJPR*DATAR%WIJ2(I,8)+BUXJPR*DATAR%WIJ2(I,9))              
 
-                  !IX+1 CROSS INTERFACE, USE FP3 
+                  !IX+1 CROSS INTERFACE
                   I=I+2
                   DO K=1,5
                      ROW2(2,K)=ROW2(2,K)-(WTYPEC2(1)*DT/2.0D0+WTYPEC1(1)*DT/2.0D0*BETAX(IY,IX))*DATAL%WIJ2(I,K)
@@ -464,10 +497,16 @@
                      WTYPEC1(J)=WTYPE1(1,J)
                      WTYPEC2(J)=WTYPE2(1,J)
                   END DO
-                  !IX-1 CROSS INTERFACE, USE FP2 
+                  !IX-1 CROSS INTERFACE
                   ROW2(3,4)=1.0D0/BETA(IY,IX)-(WTYPEC2(0)*DT/2.0D0+WTYPEC1(0)*DT/2.0D0*BETAX(IY,IX))
                   ROW2(3,5)=-(WTYPEC2(1)*DT/2.0D0+WTYPEC1(1)*DT/2.0D0*BETAX(IY,IX))                  
-                  I=2                              !USE FP2, INDEX USED FOR FP WIJ2(:,:)
+                  
+                  IF (DATAR%ITYPE .EQ. 2) THEN  !RIGHT INTERFACE TYPE, FP2
+                     I=2            
+                  ELSE                          !LEFT ITNERFACE TYPE, FP3
+                     I=3
+                  END IF
+
                   DO K=1,5
                      ROW2(3,K)=ROW2(3,K)-(WTYPEC2(-1)*DT/2.0D0+WTYPEC1(-1)*DT/2.0D0*BETAX(IY,IX))*DATAL%WIJ2(I,K)
                   END DO
@@ -577,12 +616,18 @@
                   DO J=-1,1
                      WTYPE(J)=WTYPE2(2,J)
                   END DO
-                  !IX+1 CROSS INTERFACE, USE FP2 
+                  !IX+1 CROSS INTERFACE
                   SUM=0.0D0
                   DO J=-1,0
                      SUM=SUM+WTYPE(J)*UHS(IY,IX+J)
                   END DO
-                  I=2                              !USE FP2, INDEX USED FOR FP WIJ2(:,:)
+                  
+                  IF (DATAR%ITYPE .EQ. 2) THEN  !RIGHT INTERFACE TYPE, FP2
+                     I=2            
+                  ELSE                          !LEFT ITNERFACE TYPE, FP3
+                     I=3
+                  END IF
+
                   DO K=1,5
                      SUM=SUM+WTYPE(1)*UHS(IY,DATAL%LGRD-2+K)*DATAL%WIJ2(I,K)
                   END DO
@@ -591,21 +636,22 @@
                   UH(IY,IX)=SUM*DT/2.0D0
                   
                   IX=IX+1       !APPROXIMATE IX+1
-                  !DETERMINE USE WHICH INTERFACE DATA APPROXIMATE THE MIDDLE POINT, IX+1
-                  IF (ABS(DATAL%ITYPE) .LT. 2) THEN             !USE LEFT INTERFACE WEIGHTS 
+                  !DETERMINE WHICH INTERFACE IS USED FOR DATA APPROXIMATION AT THE MIDDLE POINT, IX+1
+                  IF (DATAR%ITYPE .EQ. 2) THEN                   !USE LEFT INTERFACE WEIGHTS
                      CALL GETWTYPE(DATAL%ITYPE,2,WTYPE2,2)    
                      DO J=-1,1
                         WTYPE(J)=WTYPE2(1,J)
-                     END DO            
-                  ELSE                                          !USE RIGHT INTERFACE WEIGHTS
+                     END DO
+                     I=1                                         !START WITH FP1       
+                  ELSE                                           !USE RIGHT INTERFACE WEIGHTS
                      CALL GETWTYPE(DATAR%ITYPE,2,WTYPE2,2)    
                      DO J=-1,1
                         WTYPE(J)=WTYPE2(2,J)
-                     END DO        
+                     END DO  
+                     I=2                                         !START WITH FP2  
                   END IF                                
-                  !IX-1 CROSS INTERFACE, USE FP1 
-                  SUM=0.0D0                  
-                  I=1                              !USE FP1, INDEX USED FOR FP WIJ2(:,:)                  
+                  !IX-1 CROSS INTERFACE 
+                  SUM=0.0D0                                   
                   DO K=1,5
                      SUM=SUM+WTYPE(-1)*UHS(IY,DATAL%LGRD-2+K)*DATAL%WIJ2(I,K)
                   END DO
@@ -613,7 +659,7 @@
                                     +UJPR*DATAR%WIJ2(I,8)+BUXJPR*DATAR%WIJ2(I,9))
                   !IX, NO FP
                   SUM=SUM+WTYPE(0)*UHS(IY,IX)
-                  !IX+1 CROSS INTERFACE, USE FP3                  
+                  !IX+1 CROSS INTERFACE                 
                   I=I+2                 
                   DO K=1,5
                      SUM=SUM+WTYPE(1)*UHS(IY,DATAL%LGRD-2+K)*DATAL%WIJ2(I,K)
@@ -627,12 +673,18 @@
                   DO J=-1,1
                      WTYPE(J)=WTYPE2(1,J)
                   END DO
-                  !IX-1 CROSS INTERFACE, USE FP2 
+                  !IX-1 CROSS INTERFACE
                   SUM=0.0D0
                   DO J=0,1
                      SUM=SUM+WTYPE(J)*UHS(IY,IX+J)
                   END DO
-                  I=2                              !USE FP2, INDEX USED FOR FP WIJ2(:,:)
+                  
+                  IF (DATAR%ITYPE .EQ. 2) THEN  !RIGHT INTERFACE TYPE, FP2
+                     I=2            
+                  ELSE                          !LEFT ITNERFACE TYPE, FP3
+                     I=3
+                  END IF
+
                   DO K=1,5
                      SUM=SUM+WTYPE(-1)*UHS(IY,DATAL%LGRD-2+K)*DATAL%WIJ2(I,K)
                   END DO
@@ -730,7 +782,13 @@
                   DO J=-1,0
                      SUM=SUM+WTYPE(J)*UHS(IY,IX+J)
                   END DO
-                  I=2                              !USE FP2, INDEX USED FOR FP WIJ2(:,:)
+                  
+                  IF (DATAR%ITYPE .EQ. 2) THEN  !RIGHT INTERFACE TYPE, FP2
+                     I=2            
+                  ELSE                          !LEFT ITNERFACE TYPE, FP3
+                     I=3
+                  END IF
+
                   DO K=1,5
                      SUM=SUM+WTYPE(1)*UHS(IY,DATAL%LGRD-2+K)*DATAL%WIJ2(I,K)
                   END DO
@@ -739,21 +797,22 @@
                   UHS2(IY,IX)=SUM*(DT/2.0D0)*BETAX(IY,IX)
                   
                   IX=IX+1       !APPROXIMATE IX+1
-                  !DETERMINE USE WHICH INTERFACE DATA APPROXIMATE THE MIDDLE POINT, IX+1
-                  IF (ABS(DATAL%ITYPE) .LT. 2) THEN             !USE LEFT INTERFACE WEIGHTS  
-                     CALL GETWTYPE(DATAL%ITYPE,2,WTYPE1,2)    
+                  !DETERMINE WHICH INTERFACE IS USED FOR DATA APPROXIMATION AT THE MIDDLE POINT, IX+1
+                  IF (DATAR%ITYPE .EQ. 2) THEN                   !USE LEFT INTERFACE WEIGHTS
+                     CALL GETWTYPE(DATAL%ITYPE,2,WTYPE2,2)    
                      DO J=-1,1
-                        WTYPE(J)=WTYPE1(1,J)
-                     END DO            
-                  ELSE                                          !USE RIGHT INTERFACE WEIGHTS 
-                     CALL GETWTYPE(DATAR%ITYPE,2,WTYPE1,2)    
+                        WTYPE(J)=WTYPE2(1,J)
+                     END DO
+                     I=1                                         !START WITH FP1       
+                  ELSE                                           !USE RIGHT INTERFACE WEIGHTS
+                     CALL GETWTYPE(DATAR%ITYPE,2,WTYPE2,2)    
                      DO J=-1,1
-                        WTYPE(J)=WTYPE1(2,J)
-                     END DO        
-                  END IF                                
-                  !IX-1 CROSS INTERFACE, USE FP1 
+                        WTYPE(J)=WTYPE2(2,J)
+                     END DO  
+                     I=2                                         !START WITH FP2  
+                  END IF                                 
+                  !IX-1 CROSS INTERFACE
                   SUM=0.0D0                  
-                  I=1                              !USE FP1, INDEX USED FOR FP WIJ2(:,:)
                   DO K=1,5
                      SUM=SUM+WTYPE(-1)*UHS(IY,DATAL%LGRD-2+K)*DATAL%WIJ2(I,K)
                   END DO
@@ -761,7 +820,7 @@
                                     +UJPR*DATAR%WIJ2(I,8)+BUXJPR*DATAR%WIJ2(I,9))
                   !IX, NO FP
                   SUM=SUM+WTYPE(0)*UHS(IY,IX)
-                  !IX+1 CROSS INTERFACE, USE FP3                  
+                  !IX+1 CROSS INTERFACE                  
                   I=I+2                 
                   DO K=1,5
                      SUM=SUM+WTYPE(1)*UHS(IY,DATAL%LGRD-2+K)*DATAL%WIJ2(I,K)
@@ -775,12 +834,18 @@
                   DO J=-1,1
                      WTYPE(J)=WTYPE1(1,J)
                   END DO
-                  !IX-1 CROSS INTERFACE, USE FP2
+                  !IX-1 CROSS INTERFACE
                   SUM=0.0D0
                   DO J=0,1
                      SUM=SUM+WTYPE(J)*UHS(IY,IX+J)
                   END DO
-                  I=2                              !USE FP2, INDEX USED FOR FP WIJ2(:,:)
+                  
+                  IF (DATAR%ITYPE .EQ. 2) THEN  !RIGHT INTERFACE TYPE, FP2
+                     I=2            
+                  ELSE                          !LEFT ITNERFACE TYPE, FP3
+                     I=3
+                  END IF
+
                   DO K=1,5
                      SUM=SUM+WTYPE(-1)*UHS(IY,DATAL%LGRD-2+K)*DATAL%WIJ2(I,K)
                   END DO
@@ -882,10 +947,16 @@
                      WTYPEC1(J)=WTYPE1(2,J)
                      WTYPEC2(J)=WTYPE2(2,J)
                   END DO
-                  !IY+1 CROSS INTERFACE, USE FP2 
+                  !IY+1 CROSS INTERFACE
                   ROW2(1,1)=-(WTYPEC2(-1)*DT/2.0D0+WTYPEC1(-1)*DT/2.0D0*BETAY(IY,IX))
                   ROW2(1,2)=1.0D0/BETA(IY,IX)-(WTYPEC2(0)*DT/2.0D0+WTYPEC1(0)*DT/2.0D0*BETAY(IY,IX))
-                  I=2                              !USE FP2, INDEX USED FOR FP WIJ2(:,:)
+                  
+                  IF (DATAR%ITYPE .EQ. 2) THEN  !RIGHT INTERFACE TYPE, FP2
+                     I=2            
+                  ELSE                          !LEFT ITNERFACE TYPE, FP3
+                     I=3
+                  END IF
+
                   DO K=1,5
                      ROW2(1,K)=ROW2(1,K)-(WTYPEC2(1)*DT/2.0D0+WTYPEC1(1)*DT/2.0D0*BETAY(IY,IX))*DATAL%WIJ2(I,K)
                   END DO
@@ -894,14 +965,15 @@
                                        UJPR*DATAR%WIJ2(I,8)+BUXJPR*DATAR%WIJ2(I,9))
 
                   IY=IY+1        !APPROXIMATE IY+1
-                  !DETERMINE USE WHICH INTERFACE DATA APPROXIMATE THE MIDDLE POINT, IX+1
-                  IF (ABS(DATAL%ITYPE) .LT. 2) THEN            !USE LEFT INTERFACE WEIGHTS
+                  !DETERMINE WHICH INTERFACE IS USED FOR DATA APPROXIMATION AT THE MIDDLE POINT, IX+1
+                  IF (DATAR%ITYPE .EQ. 2) THEN                !USE LEFT INTERFACE WEIGHTS
                      CALL GETWTYPE(DATAL%ITYPE,1,WTYPE1,2)  
                      CALL GETWTYPE(DATAL%ITYPE,2,WTYPE2,2)
                      DO J=-1,1
                         WTYPEC1(J)=WTYPE1(1,J)
                         WTYPEC2(J)=WTYPE2(1,J)
                      END DO
+                     I=1                                       !START WITH FP1
                   ELSE                                         !USE RIGHT INTERFACE WEIGHTS  
                      CALL GETWTYPE(DATAR%ITYPE,1,WTYPE1,2)  
                      CALL GETWTYPE(DATAR%ITYPE,2,WTYPE2,2)
@@ -909,17 +981,17 @@
                         WTYPEC1(J)=WTYPE1(2,J)
                         WTYPEC2(J)=WTYPE2(2,J)
                      END DO
+                     I=2                                       !START WITH FP2
                   END IF    
                   ROW2(2,3)=1.0D0/BETA(IY,IX)-(WTYPEC2(0)*DT/2.0D0+WTYPEC1(0)*DT/2.0D0*BETAY(IY,IX))
-                  I=1                              !INDEX USED FOR FP WIJ2(:,:)  
-                  !IY-1 CROSS INTERFACE, USE FP1 
+                  !IY-1 CROSS INTERFACE 
                   DO K=1,5
                      ROW2(2,K)=ROW2(2,K)-(WTYPEC2(-1)*DT/2.0D0+WTYPEC1(-1)*DT/2.0D0*BETAY(IY,IX))*DATAL%WIJ2(I,K)
                   END DO
                   ROW2(2,6)=UH(IY,IX)+(WTYPEC2(-1)*DT/2.0D0+WTYPEC1(-1)*DT/2.0D0*BETAY(IY,IX))*&
                                        (UJPL*DATAL%WIJ2(I,6)+BUXJPL*DATAL%WIJ2(I,7)+&
                                         UJPR*DATAR%WIJ2(I,8)+BUXJPR*DATAR%WIJ2(I,9))
-                  !IY+1 CROSS INTERFACE, USE FP3 
+                  !IY+1 CROSS INTERFACE
                   I=I+2
                   DO K=1,5
                      ROW2(2,K)=ROW2(2,K)-(WTYPEC2(1)*DT/2.0D0+WTYPEC1(1)*DT/2.0D0*BETAY(IY,IX))*DATAL%WIJ2(I,K)
@@ -935,10 +1007,16 @@
                      WTYPEC1(J)=WTYPE1(1,J)
                      WTYPEC2(J)=WTYPE2(1,J)
                   END DO
-                  !IY-1 CROSS INTERFACE, USE FP2 
+                  !IY-1 CROSS INTERFACE
                   ROW2(3,4)=1.0D0/BETA(IY,IX)-(WTYPEC2(0)*DT/2.0D0+WTYPEC1(0)*DT/2.0D0*BETAY(IY,IX))
                   ROW2(3,5)=-(WTYPEC2(1)*DT/2.0D0+WTYPEC1(1)*DT/2.0D0*BETAY(IY,IX))                  
-                  I=2                              !INDEX USED FOR FP WIJ2(:,:)
+                  
+                  IF (DATAR%ITYPE .EQ. 2) THEN  !RIGHT INTERFACE TYPE, FP2
+                     I=2            
+                  ELSE                          !LEFT ITNERFACE TYPE, FP3
+                     I=3
+                  END IF
+
                   DO K=1,5
                      ROW2(3,K)=ROW2(3,K)-(WTYPEC2(-1)*DT/2.0D0+WTYPEC1(-1)*DT/2.0D0*BETAY(IY,IX))*DATAL%WIJ2(I,K)
                   END DO

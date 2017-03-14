@@ -338,20 +338,17 @@
       !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
       !          ABNORMAL ORDER TO STORE FP
       !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      !GO TO 100                            !BLOCK COMMENT ON THE FOLLOWING CODES
-      DO I=1,M 
-         DO J=1,ME
-            EMAT(I,J)=BE((I-1)*ME+J)
-            DATAL%WIJ2(I,J)=EMAT(I,J)
-            DATAR%WIJ2(I,J)=EMAT(I,J)
-         END DO
-      END DO
-      !100 CONTINUE                         !BLOCK COMMENT ON THE FOLLOWING CODES
+!       DO I=1,M 
+!          DO J=1,ME
+!             EMAT(I,J)=BE((I-1)*ME+J)
+!             DATAL%WIJ2(I,J)=EMAT(I,J)
+!             DATAR%WIJ2(I,J)=EMAT(I,J)
+!          END DO
+!       END DO
 
       !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
       !          LEFT TO RIGHT ORDER TO STORE FP
       !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      GO TO 100                            !BLOCK COMMENT ON THE FOLLOWING CODES
       DO I=1,M 
          DO J=1,ME
             EMAT(I,J)=BE((I-1)*ME+J)
@@ -374,8 +371,6 @@
             END DO
          END DO
       END IF
-      100 CONTINUE                         !BLOCK COMMENT ON THE FOLLOWING CODES
-
 
       DEALLOCATE(AE,BE,VVE,INDEXE,WEI,WEI1,WEI2,STAT=IERR)
 
@@ -482,19 +477,42 @@
                     DATAL%WIJ2(J,8)*DATAR%JUMP(1)+DATAL%WIJ2(J,9)*DATAR%JUMP(4)
          END DO
 
-         DO I=1,4                                 !(0,2)
-            DATAL%ERR2(I)=ABS((FPUH(DATAL%LGRD-1+I,DATAL%AXID)-TSUM(I))/FPUH(DATAL%LGRD-1+I,DATAL%AXID))
-         END DO         
-         IF (DATAL%ITYPE .EQ. -2) THEN            !(-2,0), FP4 CHANGES
-            DATAL%ERR2(4)=ABS((FPUH(DATAL%LGRD-1,DATAL%AXID)-TSUM(4))/FPUH(DATAL%LGRD-1,DATAL%AXID))
-            IF (DATAR%ITYPE .EQ. 1) THEN          !(-2,1), FP3&FP4 BOTH CHANGES
-               DATAL%ERR2(3)=ABS((FPUH(DATAL%LGRD+3,DATAL%AXID)-TSUM(3))/FPUH(DATAL%LGRD+3,DATAL%AXID))
-            END IF 
-         ELSE                             
-            IF (DATAR%ITYPE .EQ. -1) THEN         !(-1,2), FP1 CHANGES
+         !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+         !          ABNORMAL ORDER TO STORE FP
+         !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+!          DO I=1,4                                 !(0,2)
+!             DATAL%ERR2(I)=ABS((FPUH(DATAL%LGRD-1+I,DATAL%AXID)-TSUM(I))/FPUH(DATAL%LGRD-1+I,DATAL%AXID))
+!          END DO         
+!          IF (DATAL%ITYPE .EQ. -2) THEN            !(-2,0), FP4 CHANGES
+!             DATAL%ERR2(4)=ABS((FPUH(DATAL%LGRD-1,DATAL%AXID)-TSUM(4))/FPUH(DATAL%LGRD-1,DATAL%AXID))
+!             IF (DATAR%ITYPE .EQ. 1) THEN          !(-2,1), FP3&FP4 BOTH CHANGES
+!                DATAL%ERR2(3)=ABS((FPUH(DATAL%LGRD+3,DATAL%AXID)-TSUM(3))/FPUH(DATAL%LGRD+3,DATAL%AXID))
+!             END IF 
+!          ELSE                             
+!             IF (DATAR%ITYPE .EQ. -1) THEN         !(-1,2), FP1 CHANGES
+!                DATAL%ERR2(1)=ABS((FPUH(DATAL%LGRD-1,DATAL%AXID)-TSUM(1))/FPUH(DATAL%LGRD-1,DATAL%AXID))
+!             END IF
+!          END IF
+
+         !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+         !          LEFT TO RIGHT ORDER TO STORE FP
+         !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+         IF (DATAL%ITYPE .EQ. -2) THEN      !LEFT INTERFACE TYPE
+            DO I=1,4
+               DATAL%ERR2(I)=ABS((FPUH(DATAL%LGRD-2+I,DATAL%AXID)-TSUM(I))/FPUH(DATAL%LGRD-2+I,DATAL%AXID))
+            END DO
+            IF (DATAR%ITYPE .EQ. 1) THEN    !FP4 GOES ONE GRID NODE LEFT
+               DATAL%ERR2(4)=ABS((FPUH(DATAL%LGRD+3,DATAL%AXID)-TSUM(4))/FPUH(DATAL%LGRD+3,DATAL%AXID))
+            END IF
+         ELSE                               !RIGHT ITERFACE TYPE
+            DO I=1,4                                 
+               DATAL%ERR2(I)=ABS((FPUH(DATAL%LGRD-1+I,DATAL%AXID)-TSUM(I))/FPUH(DATAL%LGRD-1+I,DATAL%AXID))
+            END DO 
+            IF (DATAL%ITYPE .EQ. -1) THEN   !FP4 GOES ONE GRID NODE LEFT
                DATAL%ERR2(1)=ABS((FPUH(DATAL%LGRD-1,DATAL%AXID)-TSUM(1))/FPUH(DATAL%LGRD-1,DATAL%AXID))
             END IF
          END IF
+
 
       ELSE IF (DATAL%AXTP .EQ. 1) THEN    !IT'S ON Y-AXIS
          TSUM=0.0D0
@@ -506,16 +524,38 @@
                     DATAL%WIJ2(J,8)*DATAR%JUMP(1)+DATAL%WIJ2(J,9)*DATAR%JUMP(4)
          END DO
 
-         DO I=1,4                                 !(0,2)
-            DATAL%ERR2(I)=ABS((FPUH(DATAL%AXID,DATAL%LGRD-1+I)-TSUM(I))/FPUH(DATAL%AXID,DATAL%LGRD-1+I))
-         END DO         
-         IF (DATAL%ITYPE .EQ. -2) THEN            !(-2,0), FP4 CHANGES
-            DATAL%ERR2(4)=ABS((FPUH(DATAL%AXID,DATAL%LGRD-1)-TSUM(4))/FPUH(DATAL%AXID,DATAL%LGRD-1))
-            IF (DATAR%ITYPE .EQ. 1) THEN          !(-2,1), FP3&FP4 BOTH CHANGES
-               DATAL%ERR2(3)=ABS((FPUH(DATAL%AXID,DATAL%LGRD+3)-TSUM(3))/FPUH(DATAL%AXID,DATAL%LGRD+3))
-            END IF 
-         ELSE                             
-            IF (DATAR%ITYPE .EQ. -1) THEN         !(-1,2), FP1 CHANGES
+         !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+         !          ABNORMAL ORDER TO STORE FP
+         !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+!          DO I=1,4                                 !(0,2)
+!             DATAL%ERR2(I)=ABS((FPUH(DATAL%AXID,DATAL%LGRD-1+I)-TSUM(I))/FPUH(DATAL%AXID,DATAL%LGRD-1+I))
+!          END DO         
+!          IF (DATAL%ITYPE .EQ. -2) THEN            !(-2,0), FP4 CHANGES
+!             DATAL%ERR2(4)=ABS((FPUH(DATAL%AXID,DATAL%LGRD-1)-TSUM(4))/FPUH(DATAL%AXID,DATAL%LGRD-1))
+!             IF (DATAR%ITYPE .EQ. 1) THEN          !(-2,1), FP3&FP4 BOTH CHANGES
+!                DATAL%ERR2(3)=ABS((FPUH(DATAL%AXID,DATAL%LGRD+3)-TSUM(3))/FPUH(DATAL%AXID,DATAL%LGRD+3))
+!             END IF 
+!          ELSE                             
+!             IF (DATAR%ITYPE .EQ. -1) THEN         !(-1,2), FP1 CHANGES
+!                DATAL%ERR2(1)=ABS((FPUH(DATAL%AXID,DATAL%LGRD-1)-TSUM(1))/FPUH(DATAL%AXID,DATAL%LGRD-1))
+!             END IF
+!          END IF
+
+         !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+         !          LEFT TO RIGHT ORDER TO STORE FP
+         !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+         IF (DATAL%ITYPE .EQ. -2) THEN       !LEFT INTERFACE TYPE
+            DO I=1,4
+               DATAL%ERR2(I)=ABS((FPUH(DATAL%AXID,DATAL%LGRD-2+I)-TSUM(I))/FPUH(DATAL%AXID,DATAL%LGRD-2+I))
+            END DO
+            IF (DATAR%ITYPE .EQ. 1) THEN     !FP4 GOES ONE GRID NODE LEFT
+               DATAL%ERR2(4)=ABS((FPUH(DATAL%AXID,DATAL%LGRD+3)-TSUM(4))/FPUH(DATAL%AXID,DATAL%LGRD+3))
+            END IF
+         ELSE                                !RIGHT ITERFACE TYPE
+            DO I=1,4                                 
+               DATAL%ERR2(I)=ABS((FPUH(DATAL%AXID,DATAL%LGRD-1+I)-TSUM(I))/FPUH(DATAL%AXID,DATAL%LGRD-1+I))
+            END DO 
+            IF (DATAL%ITYPE .EQ. -1) THEN    !FP4 GOES ONE GRID NODE LEFT
                DATAL%ERR2(1)=ABS((FPUH(DATAL%AXID,DATAL%LGRD-1)-TSUM(1))/FPUH(DATAL%AXID,DATAL%LGRD-1))
             END IF
          END IF
