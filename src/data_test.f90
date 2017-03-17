@@ -237,3 +237,27 @@
       RETURN
 
       END SUBROUTINE TEST_ALLIFPS
+
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      ! TEST_RHS --
+      !
+      ! ARGUMENTS:
+      !
+      ! NOTES:
+      !
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      SUBROUTINE TEST_U(U)
+
+      REAL :: U(NY,NX)
+      INTEGER :: IX,IY
+
+      OPEN(100,FILE="test_rhs.txt")
+
+      DO IY = 1,NY
+         DO IX = 1,NX
+            WRITE(100,"(2(A,I4),A,F12.6)") " RHS ( ",IY,", ",IX," ) = ",U(IY,IX)
+         END DO
+      END DO
+
+
+      END SUBROUTINE TEST_U

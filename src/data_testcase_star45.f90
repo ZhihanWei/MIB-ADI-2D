@@ -20,9 +20,9 @@
       !INTEGER :: TESTCASE = 5
 
       !---------- INTERFACE DEFINITION ----------
-      REAL :: STAR_A = 5.0D-1
-      REAL :: STAR_B = 1.0D-1
-      REAL :: STAR_K = 4.0D0
+      REAL :: STAR_A = 8.0D-1
+      REAL :: STAR_B = 3.0D-1
+      REAL :: STAR_K = 1.0D0
 
       !---------- EXACT SOLUTION ----------
       REAL :: VK = 2.0D0 !WAVE NUMBER K
@@ -52,9 +52,9 @@
 
       REAL :: RXY,VARPHI
 
-      RXY    = SQRT(X**2+Y**2)
+      RXY    = SQRT( X**2 + Y**2 )
       VARPHI = GETANGLE(X,Y,RXY)
-      SETS   = RXY-(STAR_A+STAR_B*SIN(STAR_K*VARPHI))+TOL_SETUP
+      SETS   = RXY - ( STAR_A + STAR_B * SIN( STAR_K*VARPHI ) ) + TOL_SETUP
 
       RETURN
 
@@ -85,10 +85,10 @@
       CT = COS(T)
       DO IY = 1,NY
          DO IX = 1,NX
-            IF (SETS(XI(IX),YI(IY)) .GT. TOL_SETUP) THEN
-               U(IY,IX) = COS(VK*XI(IX))*SIN(VK*YI(IY))*CT
+            IF ( SETS(XI(IX),YI(IY)) .GT. TOL_SETUP ) THEN
+               U(IY,IX) = COS( VK * XI(IX) ) * SIN( VK * YI(IY) ) * CT
             ELSE
-               U(IY,IX) = SIN(VK*XI(IX))*COS(VK*YI(IY))*CT
+               U(IY,IX) = SIN( VK * XI(IX) ) * COS( VK * YI(IY) ) * CT
             END IF
          END DO
       END DO
@@ -113,12 +113,12 @@
 
       DO IY = 1,NY
          DO IX = 1,NX
-            IF (SETS(XI(IX),YI(IY)) .GT. TOL_SETUP) THEN
+            IF ( SETS(XI(IX),YI(IY)) .GT. TOL_SETUP ) THEN
                BETA(IY,IX)  = 10.0D0 !ON-GRID BETA OUTSIDE
                BETAX(IY,IX) =  0.0D0 !(dBETA/dX)/BETA
                BETAY(IY,IX) =  0.0D0 !(dBETA/dY)/BETA
             ELSE
-               BETA(IY,IX) =   1.0D0 !ON-GRID BETA INSIDE
+               BETA(IY,IX)  =  1.0D0 !ON-GRID BETA INSIDE
                BETAX(IY,IX) =  0.0D0 !(dBETA/dX)/BETA
                BETAY(IY,IX) =  0.0D0 !(dBETA/dY)/BETA
             END IF
@@ -149,46 +149,6 @@
       END SUBROUTINE SETIFPBETA
 
       !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      ! IFBETA1 --
-      !    INTERFACE BETA VALUE IN OMEGA^-
-      ! ARGUMENTS:
-      !    XINF     IN   X-COORDINATE OF THE INTERFACE POINT
-      !    YINF     IN   Y-COORDINATE OF THE INTERFACE POINT
-      !    IFBETA1  OUT  BETA^- VALUE ON THIS INTERFACE POINT
-      ! NOTES:
-      !    BETA IS A FUNCTION OF X AND Y
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!      FUNCTION IFBETA1(XINF,YINF)
-!
-!      REAL :: XINF,YINF,IFBETA1
-!
-!      IFBETA1 = 1.0D0
-!
-!      RETURN
-!
-!      END FUNCTION IFBETA1
-
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      ! IFBETA2 --
-      !    INTERFACE BETA VALUE IN OMEGA^+
-      ! ARGUMENTS:
-      !    XINF     IN   X-COORDINATE OF THE INTERFACE POINT
-      !    YINF     IN   Y-COORDINATE OF THE INTERFACE POINT
-      !    IFBETA2  OUT  BETA^+ VALUE ON THIS INTERFACE POINT
-      ! NOTES:
-      !    BETA IS A FUNCTION OF X AND Y
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!      FUNCTION IFBETA2(XINF,YINF)
-!
-!      REAL :: XINF,YINF,IFBETA2
-!
-!      IFBETA2 = 10.0D0
-!
-!      RETURN
-!
-!      END FUNCTION IFBETA2
-
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       ! SETSRC --
       !    ON-GRID SOURCE TERM AT TIME T
       ! ARGUMENTS:
@@ -205,11 +165,11 @@
 
       DO IY=1,NY
          DO IX=1,NX
-            CT = 2.0D0*VK**2*BETA(IY,IX)*COS(T)-SIN(T)
-            IF (SETS(XI(IX),YI(IY)) .GT. TOL_SETUP) THEN  !OUTSIDE
-               SRC(IY,IX)=CT*COS(VK*XI(IX))*SIN(VK*YI(IY))
+            CT = 2.0D0 * VK**2 * BETA(IY,IX) * COS(T) - SIN(T)
+            IF ( SETS( XI(IX),YI(IY) ) .GT. TOL_SETUP ) THEN  !OUTSIDE
+               SRC(IY,IX) = CT * COS( VK * XI(IX) ) * SIN( VK * YI(IY) )
             ELSE                                          !INSIDE
-               SRC(IY,IX)=CT*SIN(VK*XI(IX))*COS(VK*YI(IY))
+               SRC(IY,IX) = CT * SIN( VK * XI(IX) ) * COS( VK * YI(IY) )
             END IF
          END DO
       END DO
@@ -237,21 +197,56 @@
       REAL :: CT
       INTEGER :: IX,IY
 
-      CT=(COS(T+DT)+COS(T))/2.0D0
+      CT = ( COS(T+DT) + COS(T) )/2.0D0
 
-      DO IX=1,NX,NX-1    !FIRST ORDER BOUNDARY CONDITION
-         DO IY=1,NY      !U*=(U^N+ U^{N+1})/2
-            UHS(IY,IX)=COS(VK*XI(IX))*SIN(VK*YI(IY))*CT
+      DO IX = 1,NX,NX-1    !FIRST ORDER BOUNDARY CONDITION
+         DO IY = 1,NY      !U*=(U^N+ U^{N+1})/2
+            UHS(IY,IX) = COS( VK * XI(IX) ) * SIN( VK * YI(IY) ) * CT
          END DO
       END DO
 
-      DO IY=1,NY,NY-1
-         DO IX=1,NX
-            UHS(IY,IX)=COS(VK*XI(IX))*SIN(VK*YI(IY))*CT
+      DO IY = 1,NY,NY-1
+         DO IX = 1,NX
+            UHS(IY,IX) = COS( VK * XI(IX) ) * SIN( VK * YI(IY) ) * CT
          END DO
       END DO
 
       END SUBROUTINE SETBC
+
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      ! SETBC_ADIPR --
+      !    SET BOUNDARY CONDITION FOR PEACEMAN RACHFORD ADI METHOD
+      ! ARGUMENTS:
+      !    T    IN   CURRENT TIME
+      !    DT   IN   TIME STEP
+      !    UHS  OUT  ON-GRID NUMERICAL SOLUTIONS
+      ! NOTES:
+      !    U* = (U^N + U^{N+1})/2 + BETA2 * DT/4 * (U_YY^N - U_YY^{N+1})
+      !       = COS(KX)*SIN(KY)*( ( COS(T)+COS(T+DT) )/2 + BETA*DT*VK^2*( COS(T+DT)-COS(T) )/4 )
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      SUBROUTINE SETBC_ADIPR(T,DT,UHS)
+
+      REAL :: T,DT,UHS(NY,NX)
+
+      REAL :: CT1,CT2
+      INTEGER :: IX,IY
+
+      CT1 = ( COS(T+DT) + COS(T) )/2.0D0
+      CT2 = ( COS(T+DT) - COS(T) )/4.0D0
+
+      DO IX = 1,NX,NX-1    !FIRST ORDER BOUNDARY CONDITION
+         DO IY = 1,NY      !U*=(U^N+ U^{N+1})/2
+            UHS(IY,IX) = COS( VK*XI(IX) ) * SIN( VK*YI(IY) ) * ( CT1 + BETA(IY,IX) * DT * VK**2 * CT2 )
+         END DO
+      END DO
+
+      DO IY = 1,NY,NY-1
+         DO IX = 1,NX
+            UHS(IY,IX) = COS( VK*XI(IX) ) * SIN( VK*YI(IY) ) * ( CT1 + BETA(IY,IX) * DT * VK**2 * CT2 )
+         END DO
+      END DO
+
+      END SUBROUTINE SETBC_ADIPR
 
       !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!
       !                                                                        !
@@ -274,8 +269,8 @@
 
       REAL :: VARPHI,X,F,DF
 
-      F  =  (STAR_A+STAR_B*SIN(STAR_K*VARPHI))*COS(VARPHI)-X
-      DF = -(STAR_A+STAR_B*SIN(STAR_K*VARPHI))*SIN(VARPHI)+STAR_B*STAR_K*COS(STAR_K*VARPHI)*COS(VARPHI)
+      F  =  ( STAR_A + STAR_B * SIN(STAR_K*VARPHI) ) * COS(VARPHI) - X
+      DF = -( STAR_A + STAR_B * SIN(STAR_K*VARPHI) ) * SIN(VARPHI) + STAR_B * STAR_K * COS(STAR_K*VARPHI) * COS(VARPHI)
 
       RETURN
 
@@ -300,12 +295,12 @@
 
       REAL :: R1,R2,VARPHI1,VARPHI2
 
-      R1   = SQRT(X1**2+Y**2)
-      R2   = SQRT(X2**2+Y**2)
+      R1   = SQRT( X1**2 + Y**2 )
+      R2   = SQRT( X2**2 + Y**2 )
       VARPHI1 = GETANGLE(X1,Y,R1)
       VARPHI2 = GETANGLE(X2,Y,R2)
 
-      IF (ABS(VARPHI1-VARPHI2) .LT. TOL_RTSAFE) THEN
+      IF ( ABS(VARPHI1-VARPHI2) .LT. TOL_RTSAFE ) THEN
          VARPHI = (VARPHI1+VARPHI2)/2.0D0
       ELSE IF (VARPHI1 .LT. VARPHI2) THEN
          VARPHI = RTSAFE(YDY,Y,VARPHI1,VARPHI2,TOL_RTSAFE)
@@ -313,9 +308,9 @@
          VARPHI = RTSAFE(YDY,Y,VARPHI2,VARPHI1,TOL_RTSAFE)
       END IF
 
-      X = (STAR_A+STAR_B*SIN(STAR_K*VARPHI))*COS(VARPHI)
-      IF (ABS(X-MIN(X1,X2)) .LT. 1.0D-9) THEN
-         X = MIN(X1,X2)+ABS(X2-X1)*1.0D-9
+      X = ( STAR_A + STAR_B * SIN(STAR_K*VARPHI) ) * COS(VARPHI)
+      IF ( ABS(X-MIN(X1,X2)) .LT. 1.0D-9 ) THEN
+         X = MIN(X1,X2) + ABS(X2-X1) * 1.0D-9
          WRITE (*,*) "WARNING: TRANSLATION IN X",X,Y
       END IF
 
@@ -344,8 +339,8 @@
 
       REAL :: VARPHI,Y,F,DF
 
-      F  = (STAR_A+STAR_B*SIN(STAR_K*VARPHI))*SIN(VARPHI)-Y
-      DF = (STAR_A+STAR_B*SIN(STAR_K*VARPHI))*COS(VARPHI)+STAR_B*STAR_K*COS(STAR_K*VARPHI)*SIN(VARPHI)
+      F  = ( STAR_A + STAR_B * SIN(STAR_K*VARPHI) ) * SIN(VARPHI) - Y
+      DF = ( STAR_A + STAR_B * SIN(STAR_K*VARPHI) ) * COS(VARPHI) + STAR_B * STAR_K * COS(STAR_K*VARPHI) * SIN(VARPHI)
 
       RETURN
 
@@ -370,31 +365,31 @@
 
       REAL :: R1,R2,VARPHI1,VARPHI2
 
-      R1   = SQRT(X**2+Y1**2)
-      R2   = SQRT(X**2+Y2**2)
+      R1   = SQRT( X**2 + Y1**2 )
+      R2   = SQRT( X**2 + Y2**2 )
       VARPHI1 = GETANGLE(X,Y1,R1)
       VARPHI2 = GETANGLE(X,Y2,R2)
 
-      IF (ABS(VARPHI1-VARPHI2) .GT. PI) THEN !ERROR COULD HAPPEN AROUND VARPHI=0
+      IF ( ABS(VARPHI1-VARPHI2) .GT. PI ) THEN !ERROR COULD HAPPEN AROUND VARPHI=0
          WRITE (*,*) "GAMMAY: Y CHANGED SIGN",X,Y1,Y2
          IF (VARPHI1 .GT. PI) THEN !USE PERIODIC VARPHI VALUE TO OVERIDE
-            VARPHI1 = VARPHI1-2.0D0*PI
+            VARPHI1 = VARPHI1 - 2.0D0*PI
          ELSE
-            VARPHI2 = VARPHI2-2.0D0*PI
+            VARPHI2 = VARPHI2 - 2.0D0*PI
          END IF
       END IF
 
-      IF (ABS(VARPHI1-VARPHI2) .LT. TOL_RTSAFE) THEN
-         VARPHI = (VARPHI1+VARPHI2)/2.0D0
-      ELSE IF (VARPHI1 .LT. VARPHI2) THEN
+      IF ( ABS(VARPHI1-VARPHI2) .LT. TOL_RTSAFE ) THEN
+         VARPHI = (VARPHI1 + VARPHI2)/2.0D0
+      ELSE IF ( VARPHI1 .LT. VARPHI2 ) THEN
          VARPHI = RTSAFE(XDX,X,VARPHI1,VARPHI2,TOL_RTSAFE)
       ELSE
          VARPHI = RTSAFE(XDX,X,VARPHI2,VARPHI1,TOL_RTSAFE)
       END IF
 
-      Y = (STAR_A+STAR_B*SIN(STAR_K*VARPHI))*SIN(VARPHI)
-      IF (ABS(Y-MIN(Y1,Y2)) .LT. 1.0D-9) THEN
-         Y = MIN(Y1,Y2)+ABS(Y2-Y1)*1.0D-9
+      Y = ( STAR_A + STAR_B * SIN( STAR_K*VARPHI ) ) * SIN(VARPHI)
+      IF ( ABS(Y-MIN(Y1,Y2)) .LT. 1.0D-9 ) THEN
+         Y = MIN(Y1,Y2) + ABS(Y2-Y1) * 1.0D-9
          WRITE (*,*) "WARNING: TRANSLATION IN Y",X,Y
       END IF
 
@@ -426,14 +421,16 @@
 
       REAL :: DEN,XNOR,YNOR,R
 
-      DEN  = SQRT(STAR_A**2+2.0D0*STAR_A*STAR_B*SIN(STAR_K*VARPHI)+&
-             STAR_B**2-STAR_B**2*COS(STAR_K*VARPHI)**2+STAR_B**2*STAR_K**2*COS(STAR_K*VARPHI)**2)
-      XNOR = (STAR_A*COS(VARPHI)+STAR_B*COS(VARPHI)*SIN(STAR_K*VARPHI)+&
-              STAR_B*STAR_K*SIN(VARPHI)*COS(STAR_K*VARPHI))/DEN
-      YNOR = (STAR_A*SIN(VARPHI)+STAR_B*SIN(VARPHI)*SIN(STAR_K*VARPHI)-&
-              STAR_B*STAR_K*COS(VARPHI)*COS(STAR_K*VARPHI))/DEN
+      DEN  = SQRT( STAR_A**2 + 2.0D0 * STAR_A * STAR_B * SIN(STAR_K*VARPHI) + STAR_B**2 - &
+             STAR_B**2 * COS(STAR_K*VARPHI)**2 + STAR_B**2 * STAR_K**2 * COS(STAR_K*VARPHI)**2 )
 
-      R = SQRT(XNOR**2+YNOR**2)
+      XNOR = ( STAR_A * COS(VARPHI) + STAR_B * COS(VARPHI) * SIN(STAR_K*VARPHI) + &
+             STAR_B * STAR_K * SIN(VARPHI) * COS(STAR_K*VARPHI) )/DEN
+
+      YNOR = ( STAR_A * SIN(VARPHI) + STAR_B * SIN(VARPHI) * SIN(STAR_K*VARPHI) - &
+             STAR_B * STAR_K * COS(VARPHI) * COS(STAR_K*VARPHI) )/DEN
+
+      R = SQRT( XNOR**2 + YNOR**2 )
       GETNORMAL = GETANGLE(XNOR,YNOR,R)
 
       IF (WARNINGS) THEN
@@ -470,7 +467,7 @@
       XINF  = DATA%X
       YINF  = DATA%Y
 
-      DATA%JUMP(1) = (COS(VK*XINF)*SIN(VK*YINF)-SIN(VK*XINF)*COS(VK*YINF))*COS(T)
+      DATA%JUMP(1) = ( COS(VK*XINF) * SIN(VK*YINF) - SIN(VK*XINF) * COS(VK*YINF) ) * COS(T)
 
       RETURN
 
@@ -498,8 +495,8 @@
       BETA1 = DATA%BETA1
       BETA2 = DATA%BETA2
 
-      DATA%JUMP(2) = (SIN(VK*XINF)*SIN(VK*YINF)*VK*(BETA1*SIN(THETA)-BETA2*COS(THETA))+&
-                    &COS(VK*XINF)*COS(VK*YINF)*VK*(BETA2*SIN(THETA)-BETA1*COS(THETA)))*COS(T)
+      DATA%JUMP(2) = ( SIN(VK*XINF) * SIN(VK*YINF) * VK * ( BETA1 * SIN(THETA) - BETA2 * COS(THETA) ) + &
+                     & COS(VK*XINF) * COS(VK*YINF) * VK * ( BETA2 * SIN(THETA) - BETA1 * COS(THETA) ) ) * COS(T)
 
       RETURN
 
@@ -525,7 +522,8 @@
       YINF  = DATA%Y
       THETA = DATA%THETA
 
-      DATA%JUMP(3) = (COS(VK*XINF)*COS(VK*YINF)+SIN(VK*XINF)*SIN(VK*YINF))*VK*(COS(THETA)+SIN(THETA))*COS(T)
+      DATA%JUMP(3) = ( COS(VK*XINF) * COS(VK*YINF) + SIN(VK*XINF) * SIN(VK*YINF) ) * VK &
+                   & * ( COS(THETA) + SIN(THETA) ) * COS(T)
 
       RETURN
 
@@ -554,8 +552,8 @@
       BETA1 = DATA%BETA1
       BETA2 = DATA%BETA2
 
-      DATA%JUMP(4) = (-VK*BETA2*SIN(VK*XINF)*SIN(VK*YINF)-VK*BETA1*COS(VK*XINF)*COS(VK*YINF))*COS(T+DT)
-      DATA%JUMP(5) = (-VK*BETA2*SIN(VK*XINF)*SIN(VK*YINF)-VK*BETA1*COS(VK*XINF)*COS(VK*YINF))*COS(T)
+      DATA%JUMP(4) = ( -VK * BETA2 * SIN(VK*XINF) * SIN(VK*YINF) - VK * BETA1 * COS(VK*XINF) * COS(VK*YINF) ) * COS(T+DT)
+      DATA%JUMP(5) = ( -VK * BETA2 * SIN(VK*XINF) * SIN(VK*YINF) - VK * BETA1 * COS(VK*XINF) * COS(VK*YINF) ) * COS(T)
 
       RETURN
 
@@ -584,8 +582,8 @@
       BETA1 = DATA%BETA1
       BETA2 = DATA%BETA2
 
-      DATA%JUMP(4) = (VK*BETA2*COS(VK*XINF)*COS(VK*YINF)+VK*BETA1*SIN(VK*XINF)*SIN(VK*YINF))*COS(T+DT)
-      DATA%JUMP(5) = (VK*BETA2*COS(VK*XINF)*COS(VK*YINF)+VK*BETA1*SIN(VK*XINF)*SIN(VK*YINF))*COS(T)
+      DATA%JUMP(4) = ( VK * BETA2 * COS(VK*XINF) * COS(VK*YINF) + VK * BETA1 * SIN(VK*XINF) * SIN(VK*YINF) ) * COS(T+DT)
+      DATA%JUMP(5) = ( VK * BETA2 * COS(VK*XINF) * COS(VK*YINF) + VK * BETA1 * SIN(VK*XINF) * SIN(VK*YINF) ) * COS(T)
 
       RETURN
 
@@ -612,7 +610,7 @@
 
          REAL :: X,Y,T,THETA,UTAU_MINUS
 
-         UTAU_MINUS = -VK*COS(T)*( SIN(THETA)*COS(VK*X)*COS(VK*Y) + COS(THETA)*SIN(VK*X)*SIN(VK*Y) )
+         UTAU_MINUS = -VK * COS(T) * ( SIN(THETA) * COS(VK*X) * COS(VK*Y) + COS(THETA) * SIN(VK*X) * SIN(VK*Y) )
 
          RETURN
 
@@ -633,7 +631,7 @@
 
          REAL :: X,Y,T,THETA,UTAU_PLUS
 
-         UTAU_PLUS = VK*COS(T)*( SIN(THETA)*SIN(VK*X)*SIN(VK*Y) + COS(THETA)*COS(VK*X)*COS(VK*Y) )
+         UTAU_PLUS = VK * COS(T) * ( SIN(THETA) * SIN(VK*X) * SIN(VK*Y) + COS(THETA) * COS(VK*X) * COS(VK*Y) )
 
          RETURN
 
@@ -654,9 +652,9 @@
          REAL :: X,Y,T,UVAL
 
          IF (SETS(X,Y) .GT. TOL_SETUP) THEN
-            UVAL = COS(VK*X)*SIN(VK*Y)*COS(T)
+            UVAL = COS(VK*X) * SIN(VK*Y) * COS(T)
          ELSE
-            UVAL = SIN(VK*X)*COS(VK*Y)*COS(T)
+            UVAL = SIN(VK*X) * COS(VK*Y) * COS(T)
          END IF
 
          RETURN
@@ -677,7 +675,7 @@
 
          REAL :: X,Y,T,UVAL_MINUS
 
-         UVAL_MINUS = SIN(VK*X)*COS(VK*Y)*COS(T)
+         UVAL_MINUS = SIN(VK*X) * COS(VK*Y) * COS(T)
 
          RETURN
 
@@ -698,7 +696,7 @@
 
          REAL :: X,Y,T,UVAL_PLUS
 
-         UVAL_PLUS = COS(VK*X)*SIN(VK*Y)*COS(T)
+         UVAL_PLUS = COS(VK*X) * SIN(VK*Y) * COS(T)
 
          RETURN
 
@@ -724,9 +722,9 @@
       DO IY = 1,NY
          DO IX = 1,NX
             IF (SETS(XI(IX),YI(IY)) .GT. TOL_SETUP) THEN
-               U(IY,IX) = SIN(VK*XI(IX))*COS(VK*YI(IY))*CT
+               U(IY,IX) = SIN( VK*XI(IX) ) * COS( VK*YI(IY) ) * CT
             ELSE
-               U(IY,IX) = COS(VK*XI(IX))*SIN(VK*YI(IY))*CT
+               U(IY,IX) = COS( VK*XI(IX) ) * SIN( VK*YI(IY) ) * CT
             END IF
          END DO
       END DO

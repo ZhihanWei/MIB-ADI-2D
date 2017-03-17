@@ -24,17 +24,33 @@
       TYPE(LIST_DATA) :: DATAL,DATAR !DATA OF A CORNER POINT
       TYPE(LINKED_LIST), POINTER  :: ELEM
 
-      IF (TESTCASE .EQ. 3) THEN
+      IF (TESTCASE .EQ. 1) THEN
+         WRITE(*,*) " "
+         WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <DISC_EX1> WITH METHOD <ADIPR> -----"
+         WRITE(*,*) " "
+      ELSE IF (TESTCASE .EQ. 2) THEN
+         WRITE(*,*) " "
+         WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <DISC_EX2> WITH METHOD <ADIPR> -----"
+         WRITE(*,*) " "
+      ELSE IF (TESTCASE .EQ. 3) THEN
          WRITE(*,*) " "
          WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <DISC_EX3> WITH METHOD <ADIPR> -----"
          WRITE(*,*) " "
+      ELSE IF (TESTCASE .EQ. 4) THEN
+         WRITE(*,*) " "
+         WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <STAR_EX4> WITH METHOD <ADIPR> -----"
+         WRITE(*,*) " "
       ELSE IF (TESTCASE .EQ. 5) THEN
          WRITE(*,*) " "
-         WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <LEAVES_EX5> WITH METHOD <ADIPR> -----"
+         WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <STAR_EX5> WITH METHOD <ADIPR> -----"
          WRITE(*,*) " "
       ELSE IF (TESTCASE .EQ. 6) THEN
          WRITE(*,*) " "
-         WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <LEAVES2> WITH METHOD <ADIPR> -----"
+         WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <STAR_EX6> WITH METHOD <ADIPR> -----"
+         WRITE(*,*) " "
+      ELSE IF (TESTCASE .EQ. 7) THEN
+         WRITE(*,*) " "
+         WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <STAR_EX7> WITH METHOD <ADIPR> -----"
          WRITE(*,*) " "
       ELSE
          WRITE(*,*) " "
@@ -44,17 +60,13 @@
       END IF
 
       !---------- SPATIAL DOMAIN DISCRETIZATION ----------
-      XL=-CD; XR=CD !X dimension
-      YL=-CD; YR=CD !Y dimension
-      DX=(XR-XL)/(NX-1.0D0)
-
-      !central finite difference
-      VDEX(-1)= 1.0D0/DX/DX; VDEX(0)=-2.0D0/DX/DX; VDEX(1)= 1.0D0/DX/DX
-      VDEY(-1)= 1.0D0/DX/DX; VDEY(0)=-2.0D0/DX/DX; VDEY(1)= 1.0D0/DX/DX
+      XL = -CD; XR = CD !X dimension
+      YL = -CD; YR = CD !Y dimension
+      DX =  (XR-XL)/(NX-1.0D0)
 
       !---------- TIME DOMAIN DISCRETIZATION ----------
       T = TSTART; TEND = TFINAL; DT = TSTEP !INITIAL, STOPPING TIME AND TIME STEP
-      NUMT = ANINT((TEND-T)/DT); NLOOP = NUMT/NPRINT
+      NUMT = ANINT( (TEND-T)/DT ); NLOOP = NUMT/NPRINT
 
       !---------- VARIABLES DEFINED IN MOD_MIB ----------
       INODE = 0
@@ -98,25 +110,27 @@
       ALLOCATE(U(NY,NX),UH(NY,NX),STAT=ierr)
       CALL ANALYTICAL(UH,T) !INITIAL SOLUTION
 
-      !CALL SETJUMPS(T,DT,UH)
+      !+++++ TEST: TIME STEPS
+!      CALL TEST_ALLIFPS(T)
+!      STOP
 
-      DO IPRINT=1,NPRINT
-         DO ILOOP=1,NLOOP
+      DO IPRINT = 1,NPRINT
+         DO ILOOP = 1,NLOOP
             CALL SETJUMPS(T,DT,UH)
 
             !+++++ TEST: INTERFACE PTS
             IF (IPRINT .EQ. 1 .AND. ILOOP .EQ. 1) THEN
-         
+
                !ITERATION TO INITIALIZE ALL ERRORS OF FPS
                DO IY = 2,NY-2
-                  IF ( ASSOCIATED(IFPY(IY)%HEAD) ) THEN 
+                  IF ( ASSOCIATED(IFPY(IY)%HEAD) ) THEN
                      ELEM => IFPY(IY)%HEAD
                      DO WHILE ( ASSOCIATED(ELEM) )
                         IF (ELEM%DATA%ID .GT. 0) THEN
                            DATA = LIST_GET_DATA(ELEM)
                            CALL TEST_MIB1D(DATA)
                            CALL LIST_PUT_DATA(ELEM,DATA)
-                           ELEM => ELEM%NEXT 
+                           ELEM => ELEM%NEXT
                         ELSE
                            DATAL = LIST_GET_DATA(ELEM)
                            DATAR = LIST_GET_DATA(ELEM%NEXT)
@@ -126,7 +140,7 @@
                            ELEM => ELEM%NEXT%NEXT
                         END IF
                      END DO
-                  END IF 
+                  END IF
                END DO
 
                DO IX = 2,NX-2
@@ -137,24 +151,25 @@
                            DATA = LIST_GET_DATA(ELEM)
                            CALL TEST_MIB1D(DATA)
                            CALL LIST_PUT_DATA(ELEM,DATA)
-                           ELEM => ELEM%NEXT 
-                        ELSE 
+                           ELEM => ELEM%NEXT
+                        ELSE
                            DATAL = LIST_GET_DATA(ELEM)
                            DATAR = LIST_GET_DATA(ELEM%NEXT)
                            CALL TEST_CMIB1D(DATAL,DATAL)
                            CALL LIST_PUT_DATA(ELEM%NEXT,DATAR)
                            ELEM => ELEM%NEXT%NEXT
-                        END IF 
+                        END IF
                      END DO
-                  END IF 
+                  END IF
                END DO
 
                CALL TEST_ALLIFPS(T)
             END IF
 
             CALL ADIPR(T,DT,UH)
-            T=T+DT
+            T = T + DT
          END DO
+
          CALL ANALYTICAL(U,T)
          CALL OUTERROR(T,U,UH)
       END DO

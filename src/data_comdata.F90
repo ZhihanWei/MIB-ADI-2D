@@ -3,10 +3,6 @@
       !-----------------------------------------------------------------!
       MODULE MOD_INTERFACE
 
-      TYPE COORD
-         REAL :: X,Y !X- AND Y- COORDINATES OF ONE GRID
-      END TYPE COORD
-
       TYPE INTERFACE
          !-----------------------------------------------------------------!
          !           BASIC INFORMATION ABOUT THE INTERFACE PT              !
@@ -204,16 +200,14 @@
       IMPLICIT NONE
 
       !---------- CONSTANT PARAMETERS ----------
-      INTEGER,PARAMETER :: NX = 213,NY = NX
+      INTEGER,PARAMETER :: NX = 71,NY = NX
       INTEGER,PARAMETER :: NPRINT = 10
-      REAL,   PARAMETER :: CD = 1.99D0 !PI*0.32D0
-      REAL,   PARAMETER :: TSTART = 0.0D0, TFINAL = 1.0D0, TSTEP = 1.0D-4
+      REAL,   PARAMETER :: CD =1.99D0 !PI*0.32D0
+      REAL,   PARAMETER :: TSTART = 0.0D0,TFINAL = 1.0D1,TSTEP = 1.0D-3
       REAL,   PARAMETER :: PI = 3.14159265358979323846264338328D0
 
       !---------- FINITE DIFFERENCE FORMULATION ----------
       INTEGER :: INODE(NY,NX)           !NODE INDEX INDICATING INSIDE OR OUTSIDE GAMMA
-      REAL :: VDEX(-1:1)                !CENTRAL FD FOR U_XX AT REGULAR POINTS
-      REAL :: VDEY(-1:1)                !CENTRAL FD FOR U_YY AT REGULAR POINTS
 
       !---------- SOURCE TERM ----------
       REAL :: SRC(NY,NX)                !ON-GRID SOURCE
@@ -256,35 +250,35 @@
 !-----------------------------!
 #if   example == 1
       INTEGER :: TESTCASE = 1
-      INCLUDE "data_disc1.f90"
+      INCLUDE "data_testcase_disc1.f90"
 
 !-----------------------------!
 ! EXAMPLE 2 IN ZHAO JSC 2014  !
 !-----------------------------!
 #elif   example == 2
       INTEGER :: TESTCASE = 2
-      INCLUDE "data_disc2.f90"
+      INCLUDE "data_testcase_disc2.f90"
 
 !-----------------------------!
 ! EXAMPLE 3 IN ZHAO JSC 2014  !
 !-----------------------------!
 #elif   example == 3
       INTEGER :: TESTCASE = 3
-      INCLUDE "data_disc3.f90"
+      INCLUDE "data_testcase_disc3.f90"
 
 !-----------------------------!
 ! EXAMPLE 4 IN ZHAO JSC 2014  !
 !-----------------------------!
 #elif   example == 4
       INTEGER :: TESTCASE = 4
-      INCLUDE "data_star45.f90"
+      INCLUDE "data_testcase_star45.f90"
 
 !-----------------------------!
 ! EXAMPLE 5 IN ZHAO JSC 2014  !
 !-----------------------------!
 #elif example == 5
       INTEGER :: TESTCASE = 5
-      INCLUDE "data_star45.f90"
+      INCLUDE "data_testcase_star45.f90"
       INCLUDE "data_rtsafe.f90"
 
 !-----------------------------!
@@ -292,7 +286,7 @@
 !-----------------------------!
 #elif example == 6
       INTEGER :: TESTCASE = 6
-      INCLUDE "data_star6.f90"
+      INCLUDE "data_testcase_star6.f90"
       INCLUDE "data_rtsafe.f90"
 
 !-----------------------------!
@@ -300,7 +294,7 @@
 !-----------------------------!
 #elif example == 7
       INTEGER :: TESTCASE = 7
-      INCLUDE "data_star7.f90"
+      INCLUDE "data_testcase_star7.f90"
       INCLUDE "data_rtsafe.f90"
 
 #endif
@@ -334,7 +328,7 @@
       ELSE IF (YO .GT. 0) THEN
          GETANGLE = ACOS(XO/RADI)
       ELSE
-         GETANGLE = 2.0D0*PI-ACOS(XO/RADI)
+         GETANGLE = 2.0D0 * PI - ACOS(XO/RADI)
       END IF
 
       RETURN
@@ -363,13 +357,13 @@
 
       DO IY = 1,NY
          DO IX = 1,NX
-            TEMP = ABS(U(IY,IX)-UH(IY,IX))
+            TEMP = ABS( U(IY,IX) - UH(IY,IX) )
             IF (TEMP .GT. VM) VM = TEMP
-            EL2 = EL2+TEMP*TEMP
+            EL2 = EL2 + TEMP * TEMP
          END DO
       END DO
 
-      EL2 = SQRT(EL2/(NY*1.0D0*NX))
+      EL2 = SQRT( EL2/(NY * 1.0D0 * NX) )
 
       IT = 10 !CHUAN: ADD IT=10 TO GET INTO THE FOLLOWING IF STATEMENT
 

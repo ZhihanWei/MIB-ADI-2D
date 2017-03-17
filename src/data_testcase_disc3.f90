@@ -1,28 +1,23 @@
       !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      ! 2D HEAT EQUATION WITH MULTI-LEAVES INTERFACE
+      ! 2D HEAT EQUATION WITH DISC INTERFACE
       ! ============================================
       ! PDE: U_T = (BETA U_X)_X + (BETA U_Y)_Y + F
       !    BETA1=1     INSIDE
       !    BETA2=10    OUTSIDE
-      !    U(X,Y)=SIN(KX)COS(KY)+COS(T) INSIDE
-      !          =COS(KX)SIN(KY)+COS(T) OUTSIDE
-      !    F=SIN(T)+2*BETA1*K^2*SIN(KX)COS(KY)     INSIDE
-      !     =SIN(T)+2*BETA1*K^2*COS(KX)SIN(KY)    OUTSIDE
+      !    U(X,Y)=COS(T)+EXP(X**2+Y**2) INSIDE
+      !          =COS(T)+SIN(KX)COS(KY) OUTSIDE
+      !    F=-SIN(T)-4*BETA1*EXP(X**2+Y**2)(X**2+Y**2+1)    INSIDE
+      !     =-SIN(T)+2*BETA2*K**2*SIN(KX)*COS(KY)           OUTSIDE
       !
-      ! GAMMA: R = A + B*SIN(K*VARPHI)
-      !    VARPHI   THE ARC-LENGTH PARAMETER,
-      !    THETA    THE ANGLE OF OUTWARD NORMAL OF AN INTERFACE POINT (XINF,YINF)
-      !    VARPHI   [0,2*PI]
-      !    (2-LEAVE: A=1/2, B=1/4, K=2; 4-LEAVE: A=1/2, B=1/10, K=4;)
+      ! GAMMA: R**2 = X**2 + Y**2
+      !        R = (1/2)**2
       !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+      
       !---------- TEST CASE IDENTIFIER ----------
-      !INTEGER :: TESTCASE = 5
+      !INTEGER :: TESTCASE = 3
 
       !---------- INTERFACE DEFINITION ----------
-      REAL :: STAR_A = 5.0D-1
-      REAL :: STAR_B = 1.0D-1
-      REAL :: STAR_K = 4.0D0
+      REAL :: RADIUS = 0.5D0
 
       !---------- EXACT SOLUTION ----------
       REAL :: VK = 2.0D0 !WAVE NUMBER K
@@ -31,7 +26,7 @@
 
       !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!
       !                                                                        !
-      !                           INTERFACE  RELATED                           !
+      !                                INTERFACE                               !
       !                                                                        !
       !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -50,15 +45,49 @@
 
       REAL :: X,Y,SETS
 
-      REAL :: RXY,VARPHI
-
-      RXY    = SQRT(X**2+Y**2)
-      VARPHI = GETANGLE(X,Y,RXY)
-      SETS   = RXY-(STAR_A+STAR_B*SIN(STAR_K*VARPHI))+TOL_SETUP
+      SETS = SQRT(X**2+Y**2) - RADIUS + TOL_SETUP
 
       RETURN
 
       END FUNCTION SETS
+
+      !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!
+      !                                                                        !
+      !                                EQUATION                                !
+      !                                                                        !
+      !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!
+
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      ! ANALYTICAL --
+      !    GENERATING ANALYTICAL SOLUTION
+      ! ARGUMENTS:
+      !    U  OUT  MATRIX TO STORE EXACT SOLUTION ON ALL GRIDS
+      !    T  IN   CURRENT TIME
+      ! NOTES:
+      !
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      SUBROUTINE ANALYTICAL(U,T)
+
+      REAL :: U(NY,NX),T
+
+      REAL :: CT,RAD
+      INTEGER :: IX,IY
+
+      CT = COS(T)
+      DO IY = 1,NY
+         DO IX = 1,NX
+            RAD = SQRT( XI(IX)**2 + YI(IY)**2 )
+            IF (RAD .LT. RADIUS) THEN      !INSIDE
+               U(IY,IX) = CT + EXP( XI(IX)**2 + YI(IY)**2 )
+            ELSE                           !OUTSIDE
+               U(IY,IX) = CT + SIN( VK*XI(IX) ) * COS( VK*YI(IY) )
+            END IF
+         END DO
+      END DO
+
+      RETURN
+
+      END SUBROUTINE ANALYTICAL
 
       !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       ! SETBETA --
@@ -66,8 +95,8 @@
       ! ARGUMENTS:
       !
       ! NOTES:
-      !    BETA IS A FUNCTION OF X AND Y, I.E., BETA(X,Y).
-      !    THREE BETA VALUES ARE NEEDED ON EACH GRID: BETA,(dBETA/dX)/BETA,
+      !    BETA IS A FUNCTION OF X AND Y, I.E., BETA(X,Y). 
+      !    THREE BETA VALUES ARE NEEDED ON EACH GRID: BETA,(dBETA/dX)/BETA, 
       !    AND (dBETA/dY)/BETA.
       !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       SUBROUTINE SETBETA
@@ -81,7 +110,7 @@
                BETAX(IY,IX) =  0.0D0 !(dBETA/dX)/BETA
                BETAY(IY,IX) =  0.0D0 !(dBETA/dY)/BETA
             ELSE
-               BETA(IY,IX) =   1.0D0 !ON-GRID BETA INSIDE
+               BETA(IY,IX)  =  1.0D0 !ON-GRID BETA INSIDE
                BETAX(IY,IX) =  0.0D0 !(dBETA/dX)/BETA
                BETAY(IY,IX) =  0.0D0 !(dBETA/dY)/BETA
             END IF
@@ -104,285 +133,12 @@
 
       TYPE(LIST_DATA) :: DATA
 
-      !INSIDE BETA
       DATA%BETA1 = 1.0D0
-      !OUTSIDE BETA
       DATA%BETA2 = 1.0D1
 
       RETURN
 
       END SUBROUTINE SETIFPBETA
-
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      ! IFBETA1 --
-      !    INTERFACE BETA VALUE IN OMEGA^-
-      ! ARGUMENTS:
-      !    XINF     IN   X-COORDINATE OF THE INTERFACE POINT
-      !    YINF     IN   Y-COORDINATE OF THE INTERFACE POINT
-      !    IFBETA1  OUT  BETA^- VALUE ON THIS INTERFACE POINT
-      ! NOTES:
-      !    BETA IS A FUNCTION OF X AND Y
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!      FUNCTION IFBETA1(XINF,YINF)
-!
-!      REAL :: XINF,YINF,IFBETA1
-!
-!      IFBETA1 = 1.0D0
-!
-!      RETURN
-!
-!      END FUNCTION IFBETA1
-
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      ! IFBETA2 --
-      !    INTERFACE BETA VALUE IN OMEGA^+
-      ! ARGUMENTS:
-      !    XINF     IN   X-COORDINATE OF THE INTERFACE POINT
-      !    YINF     IN   Y-COORDINATE OF THE INTERFACE POINT
-      !    IFBETA2  OUT  BETA^+ VALUE ON THIS INTERFACE POINT
-      ! NOTES:
-      !    BETA IS A FUNCTION OF X AND Y
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!      FUNCTION IFBETA2(XINF,YINF)
-!
-!      REAL :: XINF,YINF,IFBETA2
-!
-!      IFBETA2 = 10.0D0
-!
-!      RETURN
-!
-!      END FUNCTION IFBETA2
-
-      !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!
-      !                                                                        !
-      !                   SETUPS FOR INTERFACE GAMMA IN MIB                    !
-      !                                                                        !
-      !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!
-
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      ! XDX --
-      !    COMPUTER F AND DF FOR GAMMAY
-      ! ARGUMENTS:
-      !    VARPHI  IN   ARC-LENGTH PARAMETER
-      !    X       IN   X-COORDINATE OF THE STARTING POINT
-      !    F       OUT  FUNCTION F
-      !    DF      OUT  DERIVATIVE OF THE FUNCTION F
-      ! NOTES:
-      !    CALCULATE F AND DF USED IN NEWTON ITERFATION (X DIRECTION)
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      SUBROUTINE XDX(VARPHI,X,F,DF)
-
-      REAL :: VARPHI,X,F,DF
-
-      F  =  (STAR_A+STAR_B*SIN(STAR_K*VARPHI))*COS(VARPHI)-X
-      DF = -(STAR_A+STAR_B*SIN(STAR_K*VARPHI))*SIN(VARPHI)+STAR_B*STAR_K*COS(STAR_K*VARPHI)*COS(VARPHI)
-
-      RETURN
-
-      END SUBROUTINE XDX
-
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      ! GAMMAX --
-      !    LOCATE ON-GRID INTERFACE POINT X COORDINATE
-      ! ARGUMENTS:
-      !    Y       IN   Y-COORDINATE OF A IY-AXIS
-      !    X1      IN   X-COORDINATE OF LEFT POINT OF THE INTERVAL
-      !    X2      IN   X-COORDINATE OF RIGHT POINT OF THE INTERVAL
-      !    X       OUT  X-COORDINATE OF THE INTERSECTION
-      !    VARPHI  OUT  ARC-LENGTH PARAMETER
-      ! NOTES:
-      !    NEWTON ITERATION TO LOCATE THE INTERSECTION OF THE INTERFACE AND
-      !    IY-AXIS IN THE INTERVAL (X1,X2)
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      SUBROUTINE GAMMAX(Y,X1,X2,X,VARPHI)
-
-      REAL :: Y,X1,X2,X,VARPHI
-
-      REAL :: R1,R2,VARPHI1,VARPHI2
-
-      R1   = SQRT(X1**2+Y**2)
-      R2   = SQRT(X2**2+Y**2)
-      VARPHI1 = GETANGLE(X1,Y,R1)
-      VARPHI2 = GETANGLE(X2,Y,R2)
-
-      IF (ABS(VARPHI1-VARPHI2) .LT. TOL_RTSAFE) THEN
-         VARPHI = (VARPHI1+VARPHI2)/2.0D0
-      ELSE IF (VARPHI1 .LT. VARPHI2) THEN
-         VARPHI = RTSAFE(YDY,Y,VARPHI1,VARPHI2,TOL_RTSAFE)
-      ELSE
-         VARPHI = RTSAFE(YDY,Y,VARPHI2,VARPHI1,TOL_RTSAFE)
-      END IF
-
-      X = (STAR_A+STAR_B*SIN(STAR_K*VARPHI))*COS(VARPHI)
-      IF (ABS(X-MIN(X1,X2)) .LT. 1.0D-9) THEN
-         X = MIN(X1,X2)+ABS(X2-X1)*1.0D-9
-         WRITE (*,*) "WARNING: TRANSLATION IN X",X,Y
-      END IF
-
-      IF ((X2-X)*(X-X1) .LT. 0.0D0) THEN
-         WRITE (*,*) "ERROR: GAMMAX IS NOT WITHIN THE INTERVAL"
-         WRITE (*,*) X1,X,X2
-         STOP
-      END IF
-
-      RETURN
-
-      END SUBROUTINE GAMMAX
-
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      ! YDY --
-      !    COMPUTER F AND DF FOR GAMMAX
-      ! ARGUMENTS:
-      !    VARPHI  IN   ARC-LENGTH PARAMETER
-      !    Y       IN   Y-COORDINATE OF THE STARTING POINT
-      !    F       OUT  FUNCTION F
-      !    DF      OUT  DERIVATIVE OF THE FUNCTION F
-      ! NOTES:
-      !    CALCULATE F AND DF USED IN NEWTON ITERFATION (Y DIRECTION)
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      SUBROUTINE YDY(VARPHI,Y,F,DF)
-
-      REAL :: VARPHI,Y,F,DF
-
-      F  = (STAR_A+STAR_B*SIN(STAR_K*VARPHI))*SIN(VARPHI)-Y
-      DF = (STAR_A+STAR_B*SIN(STAR_K*VARPHI))*COS(VARPHI)+STAR_B*STAR_K*COS(STAR_K*VARPHI)*SIN(VARPHI)
-
-      RETURN
-
-      END SUBROUTINE YDY
-
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      ! GAMMAY --
-      !   LOCATE ON-GRID INTERFACE POINT Y COORDINATE
-      ! ARGUMENTS:
-      !    X       IN   X-COORDINATE OF A IX-AXIS
-      !    Y1      IN   Y-COORDINATE OF BOTTOM POINT OF THE INTERVAL
-      !    Y2      IN   Y-COORDINATE OF TOP POINT OF THE INTERVAL
-      !    Y       OUT  Y-COORDINATE OF THE INTERSECTION
-      !    VARPHI  OUT   ARC-LENGTH PARAMETER
-      ! NOTES:
-      !    NEWTON ITERATION TO LOCATE THE INTERSECTION OF THE INTERFACE AND
-      !    IX-AXIS IN THE INTERVAL (Y1,Y2)
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      SUBROUTINE GAMMAY(X,Y1,Y2,Y,VARPHI)
-
-      REAL :: X,Y1,Y2,Y,VARPHI
-
-      REAL :: R1,R2,VARPHI1,VARPHI2
-
-      R1   = SQRT(X**2+Y1**2)
-      R2   = SQRT(X**2+Y2**2)
-      VARPHI1 = GETANGLE(X,Y1,R1)
-      VARPHI2 = GETANGLE(X,Y2,R2)
-
-      IF (ABS(VARPHI1-VARPHI2) .GT. PI) THEN !ERROR COULD HAPPEN AROUND VARPHI=0
-         WRITE (*,*) "GAMMAY: Y CHANGED SIGN",X,Y1,Y2
-         IF (VARPHI1 .GT. PI) THEN !USE PERIODIC VARPHI VALUE TO OVERIDE
-            VARPHI1 = VARPHI1-2.0D0*PI
-         ELSE
-            VARPHI2 = VARPHI2-2.0D0*PI
-         END IF
-      END IF
-
-      IF (ABS(VARPHI1-VARPHI2) .LT. TOL_RTSAFE) THEN
-         VARPHI = (VARPHI1+VARPHI2)/2.0D0
-      ELSE IF (VARPHI1 .LT. VARPHI2) THEN
-         VARPHI = RTSAFE(XDX,X,VARPHI1,VARPHI2,TOL_RTSAFE)
-      ELSE
-         VARPHI = RTSAFE(XDX,X,VARPHI2,VARPHI1,TOL_RTSAFE)
-      END IF
-
-      Y = (STAR_A+STAR_B*SIN(STAR_K*VARPHI))*SIN(VARPHI)
-      IF (ABS(Y-MIN(Y1,Y2)) .LT. 1.0D-9) THEN
-         Y = MIN(Y1,Y2)+ABS(Y2-Y1)*1.0D-9
-         WRITE (*,*) "WARNING: TRANSLATION IN Y",X,Y
-      END IF
-
-      IF ((Y2-Y)*(Y-Y1) .LT. 0.D0) THEN
-         WRITE (*,*) "ERROR: GAMMAY IS NOT WITHIN THE INTERVAL"
-         WRITE (*,*) Y1,Y,Y2
-         STOP
-      END IF
-
-      RETURN
-
-      END SUBROUTINE GAMMAY
-
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      ! GETNORMAL --
-      !    DETERMINE THE ANGLE FOR OUTWARD NORMAL DIRECTION
-      ! ARGUMENTS:
-      !    XO         IN   X-COORIDNATE OF A GIVEN POINT
-      !    YO         IN   Y-COORDINATE OF A GIVEN POINT
-      !    VARPHI     IN   ARC-LENGTH PARAMETER
-      !    GETNORMAL  OUT  THE ANGLE FORMED BY THE OUTWARD NORMAL DIRECTION AND
-      !                    X-AXIS
-      ! NOTES:
-      !    THE FORMULAR IS GIVEN BY ???
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      FUNCTION GETNORMAL(XO,YO,VARPHI)
-
-      REAL :: XO,YO,VARPHI,GETNORMAL
-
-      REAL :: DEN,XNOR,YNOR,R
-
-      DEN  = SQRT(STAR_A**2+2.0D0*STAR_A*STAR_B*SIN(STAR_K*VARPHI)+&
-             STAR_B**2-STAR_B**2*COS(STAR_K*VARPHI)**2+STAR_B**2*STAR_K**2*COS(STAR_K*VARPHI)**2)
-      XNOR = (STAR_A*COS(VARPHI)+STAR_B*COS(VARPHI)*SIN(STAR_K*VARPHI)+&
-              STAR_B*STAR_K*SIN(VARPHI)*COS(STAR_K*VARPHI))/DEN
-      YNOR = (STAR_A*SIN(VARPHI)+STAR_B*SIN(VARPHI)*SIN(STAR_K*VARPHI)-&
-              STAR_B*STAR_K*COS(VARPHI)*COS(STAR_K*VARPHI))/DEN
-
-      R = SQRT(XNOR**2+YNOR**2)
-      GETNORMAL = GETANGLE(XNOR,YNOR,R)
-
-      IF (WARNINGS) THEN
-         WRITE(*,*) "XO = ",XO,"IS UNUSED IN GETNORMAL"
-         WRITE(*,*) "YO = ",YO,"IS UNUSED IN GETNORMAL"
-      END IF
-
-      RETURN
-
-      END FUNCTION GETNORMAL
-
-!******************************************************************************************************************!
-
-      !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!
-      !                                                                        !
-      !                            EQUATION RELATED                            !
-      !                                                                        !
-      !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!
-
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      ! ANALYTICAL --
-      !    GENERATING ANALYTICAL SOLUTION
-      ! ARGUMENTS:
-      !    U  OUT  MATRIX TO STORE EXACT SOLUTION ON ALL GRIDS
-      !    T  IN   CURRENT TIME
-      ! NOTES:
-      !
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      SUBROUTINE ANALYTICAL(U,T)
-
-      REAL :: U(NY,NX),T
-
-      REAL :: CT
-      INTEGER :: IX,IY
-
-      CT = COS(T)
-      DO IY = 1,NY
-         DO IX = 1,NX
-            IF (SETS(XI(IX),YI(IY)) .GT. TOL_SETUP) THEN
-               U(IY,IX) = COS(VK*XI(IX))*SIN(VK*YI(IY))+CT
-            ELSE
-               U(IY,IX) = SIN(VK*XI(IX))*COS(VK*YI(IY))+CT
-            END IF
-         END DO
-      END DO
-
-      RETURN
-
-      END SUBROUTINE ANALYTICAL
 
       !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       ! SETSRC --
@@ -396,16 +152,16 @@
 
       REAL :: T
 
+      REAL :: RAD
       INTEGER :: IX,IY
-      REAL :: CT
 
-      DO IY=1,NY
-         DO IX=1,NX
-            CT = -SIN(T)
-            IF (SETS(XI(IX),YI(IY)) .GT. TOL_SETUP) THEN  !OUTSIDE
-               SRC(IY,IX)=CT+2*BETA(IY,IX)*VK**2*COS(VK*XI(IX))*SIN(VK*YI(IY))
-            ELSE                                          !INSIDE
-               SRC(IY,IX)=CT+2*BETA(IY,IX)*VK**2*SIN(VK*XI(IX))*COS(VK*YI(IY))
+      DO IY = 1,NY
+         DO IX = 1,NX
+            RAD = SQRT( XI(IX)**2 + YI(IY)**2 )
+            IF (RAD .LT. RADIUS) THEN  !INSIDE
+               SRC(IY,IX) = -SIN(T) - 4.0D0 * BETA(IY,IX) * EXP(RAD**2) * (RAD**2 + 1.0D0)
+            ELSE                       !OUTSIDE
+               SRC(IY,IX) = -SIN(T) + 2.0D0 * BETA(IY,IX) * VK**2 * SIN( VK*XI(IX) ) * COS( VK*YI(IY) )
             END IF
          END DO
       END DO
@@ -433,21 +189,159 @@
       REAL :: CT
       INTEGER :: IX,IY
 
-      CT=(COS(T+DT)+COS(T))/2.0D0
+      CT = ( COS(T+DT) + COS(T) )/2.0D0
 
-      DO IX=1,NX,NX-1    !FIRST ORDER BOUNDARY CONDITION
-         DO IY=1,NY      !U*=(U^N+ U^{N+1})/2
-            UHS(IY,IX)=COS(VK*XI(IX))*SIN(VK*YI(IY))+CT
+      DO IX = 1,NX,NX-1    !FIRST ORDER BOUNDARY CONDITION
+         DO IY = 1,NY      !U*=(U^N+ U^{N+1})/2
+            UHS(IY,IX) = CT + SIN( VK*XI(IX) ) * COS( VK*YI(IY) )
          END DO
       END DO
 
-      DO IY=1,NY,NY-1
-         DO IX=1,NX
-            UHS(IY,IX)=COS(VK*XI(IX))*SIN(VK*YI(IY))+CT
+      DO IY = 1,NY,NY-1
+         DO IX = 1,NX
+            UHS(IY,IX) = CT + SIN( VK*XI(IX) ) * COS( VK*YI(IY) )
          END DO
       END DO
 
       END SUBROUTINE SETBC
+
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      ! SETBC_ADIPR --
+      !    SET BOUNDARY CONDITION FOR PEACEMAN RACHFORD ADI METHOD
+      ! ARGUMENTS:
+      !    T    IN   CURRENT TIME
+      !    DT   IN   TIME STEP
+      !    UHS  OUT  ON-GRID NUMERICAL SOLUTIONS
+      ! NOTES:
+      !    U* = (U^N + U^{N+1})/2 + BETA2 * DT/4 * (U_YY^N - U_YY^{N+1})
+      !       = SIN(KX)*COS(KY) + ( COS(T) + COS(T+DT) )/2
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      SUBROUTINE SETBC_ADIPR(T,DT,UHS)
+
+      REAL :: T,DT,UHS(NY,NX)
+
+      REAL :: CT
+      INTEGER :: IX,IY
+
+      CT = ( COS(T+DT) + COS(T) )/2.0D0
+
+      DO IX = 1,NX,NX-1    !FIRST ORDER BOUNDARY CONDITION
+         DO IY = 1,NY      !U*=(U^N+ U^{N+1})/2
+            UHS(IY,IX) = SIN( VK*XI(IX) ) * COS( VK*YI(IY) ) + CT
+         END DO
+      END DO
+
+      DO IY = 1,NY,NY-1
+         DO IX = 1,NX
+            UHS(IY,IX) = SIN( VK*XI(IX) ) * COS( VK*YI(IY) ) + CT
+         END DO
+      END DO
+
+      END SUBROUTINE SETBC_ADIPR
+
+      !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!
+      !                                                                        !
+      !                   SETUPS FOR INTERFACE GAMMA IN MIB                    !
+      !                                                                        !
+      !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!
+
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      ! GAMMAX --
+      !    LOCATE ON-GRID INTERFACE POINT X COORDINATE
+      ! ARGUMENTS:
+      !    Y       IN   Y-COORDINATE OF A IY-AXIS
+      !    X1      IN   X-COORDINATE OF LEFT POINT OF THE INTERVAL
+      !    X2      IN   X-COORDINATE OF RIGHT POINT OF THE INTERVAL
+      !    X       OUT  X-COORDINATE OF THE INTERSECTION
+      !    VARPHI  OUT  ARC-LENGTH PARAMETER
+      ! NOTES:
+      !    NEWTON ITERATION TO LOCATE THE INTERSECTION OF THE INTERFACE AND
+      !    IY-AXIS IN THE INTERVAL (X1,X2)
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      SUBROUTINE GAMMAX(Y,X1,X2,X,VARPHI)
+
+      REAL :: Y,X1,X2,X,VARPHI
+
+      REAL :: TMP
+
+      TMP = SQRT( RADIUS**2 - Y**2 )
+      IF (ABS( TMP - ABS(X1) ) .LT. 1.0D-9) THEN
+         X = X1 + (X2-X1) * 1.0D-9
+         WRITE(*,*) "WARNING: TRANSLATION IN X",X,Y
+      ELSEIF ((TMP.GT.X1) .AND. (TMP.LT.X2)) THEN
+         X =  TMP
+      ELSEIF ((-TMP.GT.X2) .AND. (-TMP.LT.X1)) THEN
+         X = -TMP
+      ELSE
+         WRITE(*,*) "ERROR in GAMMAX"
+         STOP
+      END IF
+
+      VARPHI = GETANGLE(X,Y,RADIUS)
+
+      RETURN
+
+      END SUBROUTINE GAMMAX
+
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      ! GAMMAY --
+      !   LOCATE ON-GRID INTERFACE POINT Y COORDINATE
+      ! ARGUMENTS:
+      !    X       IN   X-COORDINATE OF A IX-AXIS
+      !    Y1      IN   Y-COORDINATE OF BOTTOM POINT OF THE INTERVAL
+      !    Y2      IN   Y-COORDINATE OF TOP POINT OF THE INTERVAL
+      !    Y       OUT  Y-COORDINATE OF THE INTERSECTION
+      !    VARPHI  OUT   ARC-LENGTH PARAMETER
+      ! NOTES:
+      !    NEWTON ITERATION TO LOCATE THE INTERSECTION OF THE INTERFACE AND
+      !    IX-AXIS IN THE INTERVAL (Y1,Y2)
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      SUBROUTINE GAMMAY(X,Y1,Y2,Y,VARPHI)
+
+      REAL :: X,Y1,Y2,Y,VARPHI
+
+      REAL :: TMP
+
+      TMP = SQRT( RADIUS**2 - X**2 )
+      IF ( ABS( TMP-ABS(Y1) ) .LT. 1.0D-9 ) THEN
+         Y = Y1 + (Y2 - Y1) * 1.0D-9
+         WRITE(*,*) "WARNING: TRANSLATION IN Y",Y,X
+      ELSE IF ( ( TMP.GT.Y1) .AND. ( TMP.LT.Y2) ) THEN
+         Y = TMP
+      ELSE IF ( (-TMP.GT.Y2) .AND. (-TMP.LT.Y1) ) THEN
+         Y = -TMP
+      ELSE
+         WRITE(*,*) "ERROR in GAMMAY"
+         STOP
+      END IF
+
+      VARPHI = GETANGLE(X,Y,RADIUS)
+
+      RETURN
+
+      END SUBROUTINE GAMMAY
+
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      ! GETNORMAL --
+      !    DETERMINE THE ANGLE FOR OUTWARD NORMAL DIRECTION
+      ! ARGUMENTS:
+      !    XO         IN   X-COORIDNATE OF A GIVEN POINT
+      !    YO         IN   Y-COORDINATE OF A GIVEN POINT
+      !    VARPHI     IN   ARC-LENGTH PARAMETER
+      !    GETNORMAL  OUT  THE ANGLE FORMED BY THE OUTWARD NORMAL DIRECTION AND
+      !                    X-AXIS
+      ! NOTES:
+      !    THE FORMULAR IS GIVEN BY ???
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      FUNCTION GETNORMAL(XO,YO,VARPHI)
+
+      REAL :: XO,YO,VARPHI,GETNORMAL
+
+      GETNORMAL = VARPHI
+
+      RETURN
+
+      END FUNCTION GETNORMAL
 
       !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!
       !                                                                        !
@@ -467,14 +361,14 @@
       SUBROUTINE PHI(T,DATA)
 
       REAL :: T
-      TYPE(LIST_DATA) :: DATA
+      TYPE (LIST_DATA) :: DATA
 
       REAL :: XINF,YINF
 
-      XINF  = DATA%X
-      YINF  = DATA%Y
+      XINF = DATA%X
+      YINF = DATA%Y
 
-      DATA%JUMP(1) = COS(VK*XINF)*SIN(VK*YINF)-SIN(VK*XINF)*COS(VK*YINF)
+      DATA%JUMP(1) = SIN( VK*XINF ) * COS(VK*YINF) - EXP(RADIUS**2)
 
       RETURN
 
@@ -492,7 +386,7 @@
       SUBROUTINE PSI(T,DATA)
 
       REAL :: T
-      TYPE(LIST_DATA) :: DATA
+      TYPE (LIST_DATA) :: DATA
 
       REAL :: XINF,YINF,THETA,BETA1,BETA2
 
@@ -502,8 +396,9 @@
       BETA1 = DATA%BETA1
       BETA2 = DATA%BETA2
 
-      DATA%JUMP(2) = VK*SIN(VK*XINF)*SIN(VK*YINF)*(BETA1*SIN(THETA)-BETA2*COS(THETA))&
-                   &+VK*COS(VK*XINF)*COS(VK*YINF)*(BETA2*SIN(THETA)-BETA1*COS(THETA))
+      DATA%JUMP(2) = BETA2 * VK * COS(THETA) * COS(VK*XINF) * COS(VK*YINF) - &
+                     BETA2 * VK * SIN(THETA) * SIN(VK*XINF) * SIN(VK*YINF) - &
+                     BETA1 * EXP( RADIUS**2 )
 
       RETURN
 
@@ -529,8 +424,8 @@
       YINF  = DATA%Y
       THETA = DATA%THETA
 
-      DATA%JUMP(3) = VK*(COS(THETA)+SIN(THETA))*(SIN(VK*XINF)*SIN(VK*YINF)+COS(VK*XINF)*COS(VK*YINF))
-
+      DATA%JUMP(3) = -VK * ( SIN(THETA) * COS(VK*XINF) * COS(VK*YINF) - COS(THETA) * SIN(VK*XINF) * SIN(VK*YINF) )
+      
       RETURN
 
       END SUBROUTINE PHI_TAU
@@ -540,7 +435,6 @@
       !    PSI_BAR = [BETA U_X] = BETA^+ U^+_X - BETA^- U^-_X
       ! ARGUMENTS:
       !    T      IN       CURRENT TIME
-      !    DT     IN       TIME STEP
       !    DATA   IN/OUT   A LISTED INTERFACE POINT, DATA%JUMP(4) IS UPDATED
       ! NOTES:
       !    FISRT ORDER JUMP CONDITION
@@ -550,16 +444,15 @@
       REAL :: T,DT
       TYPE(LIST_DATA) :: DATA
 
-      REAL :: XINF,YINF,THETA,BETA1,BETA2
+      REAL :: XINF,YINF,BETA1,BETA2
 
       XINF  = DATA%X
       YINF  = DATA%Y
-      THETA = DATA%THETA
       BETA1 = DATA%BETA1
       BETA2 = DATA%BETA2
 
-      DATA%JUMP(4) = -VK*BETA2*SIN(VK*XINF)*SIN(VK*YINF)-VK*BETA1*COS(VK*XINF)*COS(VK*YINF)
-      DATA%JUMP(5) = -VK*BETA2*SIN(VK*XINF)*SIN(VK*YINF)-VK*BETA1*COS(VK*XINF)*COS(VK*YINF)
+      DATA%JUMP(4) = BETA2 * VK * COS(VK*XINF) * COS(VK*YINF) - BETA1 * 2.0D0 * XINF * EXP(RADIUS**2)
+      DATA%JUMP(5) = BETA2 * VK * COS(VK*XINF) * COS(VK*YINF) - BETA1 * 2.0D0 * XINF * EXP(RADIUS**2)
 
       RETURN
 
@@ -570,7 +463,6 @@
       !    PSI_HAT = [BETA U_Y] = BETA^+ U^+_Y - BEAT^- U^-_Y
       ! ARGUMENTS:
       !    T      IN       CURRENT TIME
-      !    DT     IN       TIME STEP
       !    DATA   IN/OUT   A LISTED INTERFACE POINT, DATA%JUMP(4) IS UPDATED
       ! NOTES:
       !    FISRT ORDER JUMP CONDITION
@@ -580,16 +472,15 @@
       REAL :: T,DT
       TYPE(LIST_DATA) :: DATA
 
-      REAL :: XINF,YINF,THETA,BETA1,BETA2
+      REAL :: XINF,YINF,BETA1,BETA2
 
       XINF  = DATA%X
       YINF  = DATA%Y
-      THETA = DATA%THETA
       BETA1 = DATA%BETA1
       BETA2 = DATA%BETA2
 
-      DATA%JUMP(4) = VK*BETA2*COS(VK*XINF)*COS(VK*YINF)+VK*BETA1*SIN(VK*XINF)*SIN(VK*YINF)
-      DATA%JUMP(5) = VK*BETA2*COS(VK*XINF)*COS(VK*YINF)+VK*BETA1*SIN(VK*XINF)*SIN(VK*YINF)
+      DATA%JUMP(4) = -BETA2 * VK * SIN(VK*XINF) * SIN(VK*YINF) - BETA1 * 2.0D0 * YINF * EXP(RADIUS**2)
+      DATA%JUMP(5) = -BETA2 * VK * SIN(VK*XINF) * SIN(VK*YINF) - BETA1 * 2.0D0 * YINF * EXP(RADIUS**2)
 
       RETURN
 
@@ -597,7 +488,7 @@
 
       !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!
       !                                                                        !
-      !                              FOR TEST USING                            !
+      !                              FOR TEST USED                             !
       !                                                                        !
       !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!
 
@@ -616,7 +507,7 @@
 
          REAL :: X,Y,T,THETA,UTAU_MINUS
 
-         UTAU_MINUS = -VK*SIN(THETA)*COS(VK*X)*COS(VK*Y)-VK*COS(THETA)*SIN(VK*X)*SIN(VK*Y)
+         UTAU_MINUS = 2.0D0 * EXP( X**2 + Y**2 ) * ( -X*SIN(THETA) + Y*COS(THETA) )
 
          RETURN
 
@@ -637,7 +528,7 @@
 
          REAL :: X,Y,T,THETA,UTAU_PLUS
 
-         UTAU_PLUS = VK*SIN(THETA)*SIN(VK*X)*SIN(VK*Y)+VK*COS(THETA)*COS(VK*X)*COS(VK*Y)
+         UTAU_PLUS = -VK * ( SIN(THETA)*COS(VK*X)*COS(VK*Y) + COS(THETA)*SIN(VK*X)*SIN(VK*Y) )
 
          RETURN
 
@@ -658,9 +549,9 @@
          REAL :: X,Y,T,UVAL
 
          IF (SETS(X,Y) .GT. TOL_SETUP) THEN
-            UVAL = COS(VK*X)*SIN(VK*Y)+COS(T)
+            UVAL = COS(T) + SIN(VK*X) * COS(VK*Y)
          ELSE
-            UVAL = SIN(VK*X)*COS(VK*Y)+COS(T)
+            UVAL = COS(T) + EXP( X**2 + Y**2 )
          END IF
 
          RETURN
@@ -681,7 +572,7 @@
 
          REAL :: X,Y,T,UVAL_MINUS
 
-         UVAL_MINUS = SIN(VK*X)*COS(VK*Y)+COS(T)
+         UVAL_MINUS = COS(T) + EXP( X**2 + Y**2 )
 
          RETURN
 
@@ -702,7 +593,7 @@
 
          REAL :: X,Y,T,UVAL_PLUS
 
-         UVAL_PLUS = COS(VK*X)*SIN(VK*Y)+COS(T)
+         UVAL_PLUS = COS(T) + SIN(VK*X) * COS(VK*Y)
 
          RETURN
 
@@ -710,10 +601,10 @@
 
       !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       ! FPANALYTICAL --
-      !    GENERATING ANALYTICAL SOLUTION FOR FICTITIOUS POINTS
+      !
       ! ARGUMENTS:
-      !    U  OUT  MATRIX TO STORE EXACT SOLUTION ON ALL GRIDS
-      !    T  IN   CURRENT TIME
+      !
+      !
       ! NOTES:
       !
       !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -721,16 +612,17 @@
 
       REAL :: U(NY,NX),T
 
-      REAL :: CT
+      REAL :: CT,RAD
       INTEGER :: IX,IY
 
       CT = COS(T)
       DO IY = 1,NY
          DO IX = 1,NX
-            IF (SETS(XI(IX),YI(IY)) .GT. TOL_SETUP) THEN
-               U(IY,IX) = SIN(VK*XI(IX))*COS(VK*YI(IY))+CT
-            ELSE
-               U(IY,IX) = COS(VK*XI(IX))*SIN(VK*YI(IY))+CT
+            RAD = SQRT( XI(IX)**2 + YI(IY)**2 )
+            IF (RAD .LT. RADIUS) THEN      !INSIDE
+               U(IY,IX) = CT + SIN( VK*XI(IX) ) * COS( VK*YI(IY) )
+            ELSE                           !OUTSIDE
+               U(IY,IX) = CT + EXP( XI(IX)**2 + YI(IY)**2 )
             END IF
          END DO
       END DO

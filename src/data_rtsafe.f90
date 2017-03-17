@@ -29,11 +29,11 @@
          CALL FUNCD(RTNEWT,Y,F,DF)
          DX = F/DF
          RTNEWT = RTNEWT-DX
-         IF ((X1-RTNEWT)*(RTNEWT-X2) .LT. 0) THEN
+         IF ( (X1-RTNEWT)*(RTNEWT-X2) .LT. 0 ) THEN
             WRITE (*,*) "RTNEWT JUMPED OUT OF BRACKETS"
             STOP
          END IF
-         IF (ABS(DX) .LT. XACC) RETURN!CONVERGENCE
+         IF ( ABS(DX) .LT. XACC ) RETURN!CONVERGENCE
       END DO
       WRITE (*,*) "RTNEWT EXCEEDED MAX ITERATIONS WITH ERROR", ABS(DX)
       STOP
@@ -68,7 +68,7 @@
       CALL FUNCD(X1,Y,FL,DF)
       CALL FUNCD(X2,Y,FH,DF)
 
-      IF (((FL .GT. 0.D0) .AND. (FH .GT. 0.D0)) .OR. ((FL .LT. 0.D0) .AND. (FH .LT. 0))) THEN
+      IF ( ( (FL .GT. 0.D0) .AND. (FH .GT. 0.D0) ) .OR. ( (FL .LT. 0.D0) .AND. (FH .LT. 0) ) ) THEN
          WRITE (*,*) "ERROR: ROOT MUST BE BRACKETED IN RTSAFE",Y,X1,X2
          STOP
       END IF
@@ -93,7 +93,7 @@
 
       DO J = 1,MAXIT
          !BISECT IF NEWTON OUT OF RANGE, OR NOT DECREASING FAST ENOUGH
-         IF ((((RTSAFE-XH)*DF-F)*((RTSAFE-XL)*DF-F) .GT. 0.D0) .OR. (ABS(2.D0*F) .GT. ABS(DXOLD*DF))) THEN
+         IF ( ( ((RTSAFE-XH)*DF-F)*((RTSAFE-XL)*DF-F) .GT. 0.D0) .OR. (ABS(2.D0*F) .GT. ABS(DXOLD*DF) ) ) THEN
             DXOLD  = DX
             DX     = 0.5D0*(XH-XL)
             RTSAFE = XL+DX

@@ -19,9 +19,9 @@
       INTEGER :: IX,IY
 
       !----- SETUP XI AND YI
-      DO IX=1,NX
-         XI(IX)=XL+(IX-1.0D0)*DX
-         YI(IX)=YL+(IX-1.0D0)*DX
+      DO IX = 1,NX
+         XI(IX) = XL + (IX-1.0D0) * DX
+         YI(IX) = YL + (IX-1.0D0) * DX
       END DO
 
       !----- SETUP BETA VALUES ON ALL NODES
@@ -30,7 +30,7 @@
       !----- DETERMINE THE GRIDS INSIDE OR OUTSIDE THE INTERFACE
       DO IY = 1,NY
          DO IX = 1,NX
-            IF (SETS(XI(IX),YI(IY)) .GT. TOL_SETUP) THEN
+            IF ( SETS(XI(IX),YI(IY)) .GT. TOL_SETUP ) THEN
                INODE(IY,IX) =  1 !OUTSIDE
             ELSE
                INODE(IY,IX) = -1 !INSIDE (INCLUDE ON THE INTERFACE)
@@ -40,14 +40,14 @@
 
       !----- CHECK WHETHER THE INTERFACE IS TOO CLOSE TO THE BOUNDARY
       DO IY = 1,NY
-         IF (INODE(IY,1)*INODE(IY,2) .LT. 0 .OR. INODE(IY,NX-1)*INODE(IY,NX) .LT. 0) THEN
+         IF ( INODE(IY,1)*INODE(IY,2) .LT. 0 .OR. INODE(IY,NX-1)*INODE(IY,NX) .LT. 0 ) THEN
             WRITE(*,*) "SETUP: INTERFACE IS TOO CLOSE TO THE BOUNDARY. SPATIAL REFINEMENT IS REQUIRED..."
             STOP
          END IF
       END DO
 
       DO IX = 1,NX
-         IF (INODE(1,IX)*INODE(2,IX) .LT. 0 .OR. INODE(NY-1,IX)*INODE(NY,IX) .LT. 0) THEN
+         IF ( INODE(1,IX)*INODE(2,IX) .LT. 0 .OR. INODE(NY-1,IX)*INODE(NY,IX) .LT. 0 ) THEN
             WRITE(*,*) "SETUP: INTERFACE IS TOO CLOSE TO THE BOUNDARY. SPATIAL REFINEMENT IS REQUIRED..."
             STOP
          END IF
@@ -82,27 +82,27 @@
       DO IY = 2,NY-2
          IFP  =  0 !TRACK INTERFACE POINT
          IX   =  2
-         DO WHILE (IX .LT. (NX-1))
-            IF ((INODE(IY,IX)*INODE(IY,IX+1)) .LT. 0) THEN !CROSS INTERFACE
-               IF ((INODE(IY,IX+1)*INODE(IY,IX+2)) .GT. 0) THEN !ONCE - IRREGULAR POINT
-                  IFP = IFP+1 !ONE IRREGULAR POINT
+         DO WHILE ( IX .LT. (NX-1) )
+            IF ( INODE(IY,IX)*INODE(IY,IX+1) .LT. 0 ) THEN !CROSS INTERFACE
+               IF ( INODE(IY,IX+1)*INODE(IY,IX+2) .GT. 0) THEN !ONCE - IRREGULAR POINT
+                  IFP = IFP + 1 !ONE IRREGULAR POINT
                   CALL NEWIPY(IY,IX,IFP,DATA)
                   CALL LIST_APPEND(IFPY(IY)%HEAD,DATA) !APPEND A NEW ELEMENT TO THE END OF THE LIST
                   IX    = IX + 2
                   NIPYS = NIPYS + 1
                ELSE !TWICE - CORNER POINT
                   !----- CHECK WHETHER TWO SUCCESSIVE NODE ON ONE SIDE OF THE INTERFACE ARE IN THE SAME SUBDOMAIN
-                  IF ((INODE(IY,IX-1)*INODE(IY,IX)) .LT. 0 .OR. (INODE(IY,IX+2)*INODE(IY,IX+3)) .LT. 0) THEN
+                  IF ( INODE(IY,IX-1)*INODE(IY,IX) .LT. 0 .OR. INODE(IY,IX+2)*INODE(IY,IX+3) .LT. 0 ) THEN
                      WRITE(*,*) "FPSETUP: TWO INTERFACE POINTS ON AXIS IY = ",IY," IS TOO CLOSE. &
                                 &SPATIAL REFINEMENT IS REQUIRED..."
                      STOP
                   END IF
 
-                  IFP = IFP+1 !LEFT INTERFACE POINT
+                  IFP = IFP + 1 !LEFT INTERFACE POINT
                   CALL NEWIPY2(IY,IX,IFP,DATAL,DATAR)
                   CALL LIST_APPEND(IFPY(IY)%HEAD,DATAL) !APPEND THE LEFT  INTERFACE POINT TO THE END OF THE LIST
 
-                  IFP = IFP+1 !RIGHT INTERFACE POINT
+                  IFP = IFP + 1 !RIGHT INTERFACE POINT
                   CALL LIST_APPEND(IFPY(IY)%HEAD,DATAR) !APPEND THE RIGHT INTERFACE POINT TO THE END OF THE LIST
 
                   IX       = IX+3
@@ -110,10 +110,10 @@
                   NIPYS    = NIPYS + 2
                END IF
             ELSE !NO INTERFACE
-               IX = IX+1
+               IX = IX + 1
             END IF
          END DO
-         IF (MOD(IFP,2) .EQ. 1) THEN      ! IT'S AN OPEN CURVE ON THE DOMAIN 
+         IF ( MOD(IFP,2) .EQ. 1 ) THEN      ! IT'S AN OPEN CURVE ON THE DOMAIN
             WRITE(*,*) "ERROR IN Y-DIRECTION: CHANGE THE SIZE OF DOMAIN! IT'S AN OPEN CURVE ON THE DOMAIN!"
             STOP
          END IF          
@@ -124,26 +124,26 @@
          IFP  =  0 !TRACK INTERFACE POINT
          IY   =  2
          DO WHILE (IY .LT. (NY-1))
-            IF ((INODE(IY,IX)*INODE(IY+1,IX)) .LT. 0) THEN !CROSS INTERFACE
-               IF ((INODE(IY+1,IX)*INODE(IY+2,IX)) .GT. 0) THEN !ONCE - IRREGULAR POINT
-                  IFP = IFP+1 !ONE IRREGULAR POINT
+            IF ( INODE(IY,IX)*INODE(IY+1,IX) .LT. 0 ) THEN !CROSS INTERFACE
+               IF ( INODE(IY+1,IX)*INODE(IY+2,IX) .GT. 0 ) THEN !ONCE - IRREGULAR POINT
+                  IFP = IFP + 1 !ONE IRREGULAR POINT
                   CALL NEWIPX(IX,IY,IFP,DATA)
                   CALL LIST_APPEND(IFPX(IX)%HEAD,DATA) !APPEND A NEW ELEMENT TO THE END OF THE LIST
                   IY    = IY + 2
                   NIPXS = NIPXS + 1
                ELSE !TWICE - CORNER POINT
                   !----- CHECK WHETHER TWO SUCCESSIVE NODE ON ONE SIDE OF THE INTERFACE ARE IN THE SAME SUBDOMAIN
-                  IF ((INODE(IY-1,IX)*INODE(IY,IX)) .LT. 0 .OR. (INODE(IY+2,IX)*INODE(IY+3,IX)) .LT. 0) THEN
+                  IF ( INODE(IY-1,IX)*INODE(IY,IX) .LT. 0 .OR. INODE(IY+2,IX)*INODE(IY+3,IX) .LT. 0) THEN
                      WRITE(*,*) "FPSETUP: TWO INTERFACE POINTS ON AXIS IX = ",IX," IS TOO CLOSE. &
                                 &SPATIAL REFINEMENT IS REQUIRED..."
                      STOP
                   END IF
 
-                  IFP = IFP+1 !LOWER INTERFACE POINT
+                  IFP = IFP + 1 !LOWER INTERFACE POINT
                   CALL NEWIPX2(IX,IY,IFP,DATAL,DATAR)
                   CALL LIST_APPEND(IFPX(IX)%HEAD,DATAL) !APPEND THE LOWER INTERFACE POINT TO THE END OF THE LIST
 
-                  IFP = IFP+1 !UPPER INTERFACE POINT
+                  IFP = IFP + 1 !UPPER INTERFACE POINT
                   CALL LIST_APPEND(IFPX(IX)%HEAD,DATAR) !APPEND THE UPPER INTERFACE POINT TO THE END OF THE LIST
 
                   IY       = IY + 3
@@ -151,7 +151,7 @@
                   NIPXS    = NIPXS + 2
                END IF
             ELSE !NO INTERFACE
-               IY = IY+1
+               IY = IY + 1
             END IF 
          END DO
          IF (MOD(IFP,2) .EQ. 1) THEN      ! IT'S AN OPEN CURVE ON THE DOMAIN 
@@ -269,7 +269,7 @@
                                        !DATA%JUMP(5) = ANAL. [BEAT U_Y] AT TIME STEP T^{N}
 
                !----- LOWER AUXILIARY VALUES
-               IF (SETS(DATA%AUXL_X,DATA%AUXL_Y) .GT. TOL_SETUP) THEN !INDICATOR, PT IS IN OMEGA^+ OR OMEGA^-
+               IF ( SETS(DATA%AUXL_X,DATA%AUXL_Y) .GT. TOL_SETUP ) THEN !INDICATOR, PT IS IN OMEGA^+ OR OMEGA^-
                  DATA%UAUXL(1) =   1.0D0
                ELSE
                   DATA%UAUXL(1) = -1.0D0
@@ -283,12 +283,12 @@
                !DATA%UAUXL(3) = UVAL(DATA%AUXL_X,DATA%AUXL_Y,T)
                DATA%UAUXL(4) = 0.0D0                                  !NUM. VALUE
                DO I = 1,3
-                  DATA%UAUXL(4) = DATA%UAUXL(4) + DATA%WAUXL(I)*UH(DATA%IAUXL(I),DATA%AUXL_AXID)
+                  DATA%UAUXL(4) = DATA%UAUXL(4) + DATA%WAUXL(I) * UH(DATA%IAUXL(I),DATA%AUXL_AXID)
                END DO
-               DATA%UAUXL(4) = -2.0D0*DATA%DAUXL*DATA%UAUXL(4)        !TIMES -2*DAUXL
+               DATA%UAUXL(4) = -2.0D0 * DATA%DAUXL * DATA%UAUXL(4)        !TIMES -2*DAUXL
 
                !----- UPPER AUXILIARY VALUES
-               IF (SETS(DATA%AUXR_X,DATA%AUXR_Y) .GT. TOL_SETUP) THEN !INDICATOR, PT IS IN OMEGA^+ OR OMEGA^-
+               IF ( SETS(DATA%AUXR_X,DATA%AUXR_Y) .GT. TOL_SETUP ) THEN !INDICATOR, PT IS IN OMEGA^+ OR OMEGA^-
                   DATA%UAUXR(1) =  1.0D0
                ELSE
                   DATA%UAUXR(1) = -1.0D0
@@ -302,26 +302,26 @@
                !DATA%UAUXR(3) = UVAL(DATA%AUXR_X,DATA%AUXR_Y,T)
                DATA%UAUXR(4) = 0.0D0                                  !NUM. VALUE
                DO I = 1,3
-                  DATA%UAUXR(4) = DATA%UAUXR(4) + DATA%WAUXR(I)*UH(DATA%IAUXR(I),DATA%AUXR_AXID)
+                  DATA%UAUXR(4) = DATA%UAUXR(4) + DATA%WAUXR(I) * UH( DATA%IAUXR(I),DATA%AUXR_AXID )
                END DO
-               DATA%UAUXR(4) = 2.0D0*DATA%DAUXR*DATA%UAUXR(4)         !TIMES 2*DAUXR
+               DATA%UAUXR(4) = 2.0D0 * DATA%DAUXR * DATA%UAUXR(4)         !TIMES 2*DAUXR
 
                !----- CENTRAL DIFFERENCE FOR CALCULATING U^+_TAU OR U^-_TAU USING 6 SUPPORTING GRIDS
                DTAU = DATA%DAUXL !CENTRAL DIFFERENCE, DATA%DAUXL = DATA%DAUXR
 
                SUMJ = 0.0D0
                DO I = 1,3
-                  SUMJ = SUMJ + DATA%WAUXL(I)*UH(DATA%IAUXL(I),DATA%AUXL_AXID)
+                  SUMJ = SUMJ + DATA%WAUXL(I) * UH( DATA%IAUXL(I),DATA%AUXL_AXID )
                END DO
                DO I = 1,3
-                  SUMJ = SUMJ + DATA%WAUXR(I)*UH(DATA%IAUXR(I),DATA%AUXR_AXID)
+                  SUMJ = SUMJ + DATA%WAUXR(I) * UH( DATA%IAUXR(I),DATA%AUXR_AXID )
                END DO
 
                !----- U^+_TAU IS USED FOR CALCULATING [BETA U_Y]
-               IF (DATA%AUXL .EQ. 1) THEN
+               IF ( DATA%AUXL .EQ. 1 ) THEN
                   !----- ADD TWO MORE EXCESS TERMS WHEN DATA%AUXR HAS OPPOSITE SIGN
                   IF (DATA%AUXR .EQ. -1) THEN
-                     SUMJ = SUMJ + 0.5D0/DTAU*DATA%JUMP(1) + 0.5D0*DATA%JUMP(3) !+ 1/(2L)PHI_IP + 1/2*(PHI_TAU)_IP
+                     SUMJ = SUMJ + 0.5D0 / DTAU * DATA%JUMP(1) + 0.5D0 * DATA%JUMP(3) !+ 1/(2L)PHI_IP + 1/2*(PHI_TAU)_IP
                   END IF
 
                   !----- SET ANALYTICAL U^+_TAU AND SAVE SUMJ FOR COMPARISON
@@ -333,14 +333,14 @@
 
                   !----- PSI^HAT := [BETA U_Y]
                   !               = SIN(THETA) PSI + COS(THETA) (BETA^+ - BETA^-) U^+_TAU + COS(THETA) BETA^- PHI_TAU
-                  DATA%JUMP(6) = SIN(DATA%THETA)*DATA%JUMP(2) + COS(DATA%THETA)*(DATA%BETA2 - DATA%BETA1)*SUMJ + &
-                                &COS(DATA%THETA)*DATA%BETA1*DATA%JUMP(3)
+                  DATA%JUMP(6) = SIN(DATA%THETA) * DATA%JUMP(2) + COS(DATA%THETA) * (DATA%BETA2 - DATA%BETA1) * SUMJ + &
+                               & COS(DATA%THETA) * DATA%BETA1 * DATA%JUMP(3)
 
                !----- U^-_TAU IS USED FOR CALCULATING [BETA U_Y]
                ELSE
                   !----- ADD TWO MORE EXCESS TERMS WHEN DATA%AUXR HAS OPPOSITE SIGN
-                  IF (DATA%AUXR .EQ. 1) THEN
-                     SUMJ = SUMJ - 0.5D0/DTAU*DATA%JUMP(1) - 0.5D0*DATA%JUMP(3) !- 1/(2L)PHI_IP - 1/2*(PHI_TAU)_IP
+                  IF ( DATA%AUXR .EQ. 1 ) THEN
+                     SUMJ = SUMJ - 0.5D0 / DTAU * DATA%JUMP(1) - 0.5D0 * DATA%JUMP(3) !- 1/(2L)PHI_IP - 1/2*(PHI_TAU)_IP
                   END IF
 
                   !----- SET ANALYTICAL U^-_TAU AND SAVE SUMJ FOR COMPARISON
@@ -352,8 +352,8 @@
 
                   !----- PSI^HAT := [BETA U_Y]
                   !               = SIN(THETA) PSI + COS(THETA) (BETA^+ - BETA^-) U^-_TAU + COS(THETA) BETA^+ PHI_TAU
-                  DATA%JUMP(6) = SIN(DATA%THETA)*DATA%JUMP(2) + COS(DATA%THETA)*(DATA%BETA2 - DATA%BETA1)*SUMJ + &
-                                &COS(DATA%THETA)*DATA%BETA2*DATA%JUMP(3)
+                  DATA%JUMP(6) = SIN(DATA%THETA) * DATA%JUMP(2) + COS(DATA%THETA) * (DATA%BETA2 - DATA%BETA1) * SUMJ + &
+                               & COS(DATA%THETA) * DATA%BETA2 * DATA%JUMP(3)
 
                END IF
 
@@ -395,12 +395,12 @@
                !DATA%UAUXL(3) = UVAL(DATA%AUXL_X,DATA%AUXL_Y,T)
                DATA%UAUXL(4) = 0.0D0                                  !NUM. VALUE
                DO I = 1,3
-                  DATA%UAUXL(4) = DATA%UAUXL(4) + DATA%WAUXL(I)*UH(DATA%AUXL_AXID,DATA%IAUXL(I))
+                  DATA%UAUXL(4) = DATA%UAUXL(4) + DATA%WAUXL(I) * UH( DATA%AUXL_AXID,DATA%IAUXL(I) )
                END DO
-               DATA%UAUXL(4) = -2.0D0*DATA%DAUXL*DATA%UAUXL(4)        !TIMES -2*DAUXL
+               DATA%UAUXL(4) = -2.0D0 * DATA%DAUXL * DATA%UAUXL(4)    !TIMES -2*DAUXL
 
                !----- RIGHT AUXILIARY VALUES
-               IF (SETS(DATA%AUXR_X,DATA%AUXR_Y) .GT. TOL_SETUP) THEN !INDICATOR, PT IS IN OMEGA^+ OR OMEGA^-
+               IF ( SETS(DATA%AUXR_X,DATA%AUXR_Y) .GT. TOL_SETUP ) THEN !INDICATOR, PT IS IN OMEGA^+ OR OMEGA^-
                   DATA%UAUXR(1) =  1.0D0
                ELSE
                   DATA%UAUXR(1) = -1.0D0
@@ -414,26 +414,26 @@
                !DATA%UAUXR(3) = UVAL(DATA%AUXR_X,DATA%AUXR_Y,T)
                DATA%UAUXR(4) = 0.0D0                                  !NUM. VALUE
                DO I = 1,3
-                  DATA%UAUXR(4) = DATA%UAUXR(4) + DATA%WAUXR(I)*UH(DATA%AUXR_AXID,DATA%IAUXR(I))
+                  DATA%UAUXR(4) = DATA%UAUXR(4) + DATA%WAUXR(I) * UH( DATA%AUXR_AXID,DATA%IAUXR(I) )
                END DO
-               DATA%UAUXR(4) = 2.0D0*DATA%DAUXR*DATA%UAUXR(4)         !TIMES 2*DAUXR
+               DATA%UAUXR(4) = 2.0D0 * DATA%DAUXR * DATA%UAUXR(4)     !TIMES 2*DAUXR
 
                !----- CENTRAL DIFFERENCE FOR CALCULATING U^+_TAU OR U^-_TAU USING 6 SUPPORTING GRIDS
                DTAU = DATA%DAUXL !CENTRAL DIFFERENCE, DATA%DAUXL = DATA%DAUXR
 
                SUMJ = 0.0D0
                DO I = 1,3
-                  SUMJ = SUMJ + DATA%WAUXL(I)*UH(DATA%AUXL_AXID,DATA%IAUXL(I))
+                  SUMJ = SUMJ + DATA%WAUXL(I) * UH( DATA%AUXL_AXID,DATA%IAUXL(I) )
                END DO
                DO I = 1,3
-                  SUMJ = SUMJ + DATA%WAUXR(I)*UH(DATA%AUXR_AXID,DATA%IAUXR(I))
+                  SUMJ = SUMJ + DATA%WAUXR(I) * UH( DATA%AUXR_AXID,DATA%IAUXR(I) )
                END DO
 
                !----- U^+_TAU IS USED FOR CALCULATING [BETA U_X]
                IF (DATA%AUXL .EQ. 1) THEN
                   !----- ADD TWO MORE EXCESS TERMS WHEN DATA%AUXR HAS OPPOSITE SIGN
                   IF (DATA%AUXR .EQ. -1) THEN
-                     SUMJ = SUMJ + 0.5D0/DTAU*DATA%JUMP(1) + 0.5D0*DATA%JUMP(3) !+ 1/(2L)PHI_IP + 1/2*(PHI_TAU)_IP
+                     SUMJ = SUMJ + 0.5D0 / DTAU * DATA%JUMP(1) + 0.5D0 * DATA%JUMP(3) !+ 1/(2L)PHI_IP + 1/2*(PHI_TAU)_IP
                   END IF
 
                   !----- SET ANALYTICAL U^+_TAU AND SAVE SUMJ FOR COMPARISON
@@ -445,14 +445,14 @@
 
                   !----- PSI^BAR := [BETA U_X]
                   !               = COS(THETA) PSI - SIN(THETA) (BETA^+ - BETA^-) U^+_TAU - SIN(THETA) BETA^- PHI_TAU
-                  DATA%JUMP(6) = COS(DATA%THETA)*DATA%JUMP(2) - SIN(DATA%THETA)*(DATA%BETA2 - DATA%BETA1)*SUMJ - &
-                                &SIN(DATA%THETA)*DATA%BETA1*DATA%JUMP(3)
+                  DATA%JUMP(6) = COS(DATA%THETA) * DATA%JUMP(2) - SIN(DATA%THETA) * (DATA%BETA2 - DATA%BETA1) * SUMJ - &
+                               & SIN(DATA%THETA) * DATA%BETA1 * DATA%JUMP(3)
 
                !----- U^-_TAU IS USED FOR CALCULATING [BETA U_X]
                ELSE
                   !----- ADD TWO MORE EXCESS TERMS WHEN DATA%AUXR HAS OPPOSITE SIGN
                   IF (DATA%AUXR .EQ. 1) THEN
-                     SUMJ = SUMJ - 0.5D0/DTAU*DATA%JUMP(1) - 0.5D0*DATA%JUMP(3) !- 1/(2L)PHI_IP - 1/2*(PHI_TAU)_IP
+                     SUMJ = SUMJ - 0.5D0 / DTAU * DATA%JUMP(1) - 0.5D0 * DATA%JUMP(3) !- 1/(2L)PHI_IP - 1/2*(PHI_TAU)_IP
                   END IF
 
                   !----- SET ANALYTICAL U^-_TAU AND SAVE SUMJ FOR COMPARISON
@@ -464,8 +464,8 @@
 
                   !----- PSI^BAR := [BETA U_X]
                   !               = COS(THETA) PSI - SIN(THETA) (BETA^+ - BETA^-) U^-_TAU - SIN(THETA) BETA^+ PHI_TAU
-                  DATA%JUMP(6) = COS(DATA%THETA)*DATA%JUMP(2) - SIN(DATA%THETA)*(DATA%BETA2 - DATA%BETA1)*SUMJ - &
-                                &SIN(DATA%THETA)*DATA%BETA2*DATA%JUMP(3)
+                  DATA%JUMP(6) = COS(DATA%THETA) * DATA%JUMP(2) - SIN(DATA%THETA) * (DATA%BETA2 - DATA%BETA1) * SUMJ - &
+                               & SIN(DATA%THETA) * DATA%BETA2 * DATA%JUMP(3)
 
                END IF
 
@@ -527,14 +527,14 @@
             C2 = C2*C3
             IF (J .EQ. I-1) THEN
                DO K = MN,1,-1
-                  C(I,K) = C1*(K*C(I-1,K-1)-C5*C(I-1,K))/C2
+                  C(I,K) = C1 * ( K * C(I-1,K-1) - C5 * C(I-1,K) ) / C2
                END DO
-               C(I,0) = -C1*C5*C(I-1,0)/C2
+               C(I,0) = -C1 * C5 * C(I-1,0) / C2
             END IF
             DO K = MN,1,-1
-               C(J,K) = (C4*C(J,K)-K*C(J,K-1))/C3
+               C(J,K) = ( C4 * C(J,K) - K * C(J,K-1) ) / C3
             END DO
-            C(J,0) = C4*C(J,0)/C3
+            C(J,0) = C4 * C(J,0) / C3
          END DO
          C1 = C2
       END DO
@@ -574,72 +574,72 @@
       REAL :: C1(0:N,0:ORDER),C2(0:N,0:ORDER)
       INTEGER :: KEY,I,J
 
-      IF (PRESENT(ITYPE2)) THEN           !CORNER POINT
+      IF ( PRESENT(ITYPE2) ) THEN           !CORNER POINT
          IF (ITYPE .LT. 0) THEN           !(-2,0)&(-2,1)&(-1,2)
-            KEY=1
+            KEY = 1
          ELSE IF (ITYPE .GT. 0) THEN      !(2,0)&(2,-1)&(1,-2)
-            KEY=2
+            KEY = 2
          ELSE
             IF (ITYPE2 .LT. 0) THEN       !(0,-2)
-               KEY=2
+               KEY = 2
             ELSE                          !(0,2)
-               KEY=1
+               KEY = 1
             END IF
          END IF
 
          SELECT CASE(KEY)
          CASE (1)      !IT'S LEFT INTERFACE
             !OUTSIDE INTERPOLATION NEVER CHANGE WITH ITYPE
-            DO I=0,N
-               X2(I)=-DX+I*DX
-               X1(I)=X2(I)+DX                !(0,2)
+            DO I = 0,N
+               X2(I) = -DX + I * DX
+               X1(I) =  X2(I) + DX        !(0,2)
             END DO
             !INSIDE INTERPOLATION MODIFICATION
-            IF (ITYPE .EQ. -2) THEN          !CLOSE TO LEFT INTERFACE, 4TH FP CHANGES, (-2,0)
-               X1(N)=-DX
+            IF (ITYPE .EQ. -2) THEN       !CLOSE TO LEFT INTERFACE, 4TH FP CHANGES, (-2,0)
+               X1(N) = -DX
                IF (ITYPE2 .EQ. 1) THEN
-                  X1(N-1)=X1(N-1)+DX         !FP3 MOVE RIGHT, (-2,1)
+                  X1(N-1) = X1(N-1) + DX  !FP3 MOVE RIGHT, (-2,1)
                END IF
-            ELSE                             !CLOSE TO RIGHT INTERFACE, 4TH FP SAME
-               IF (ITYPE .EQ. -1) THEN       !FP1 MOVE LEFT, (-1,2)
-                  X1(0)=X1(0)-DX
+            ELSE                          !CLOSE TO RIGHT INTERFACE, 4TH FP SAME
+               IF (ITYPE .EQ. -1) THEN    !FP1 MOVE LEFT, (-1,2)
+                  X1(0) = X1(0) - DX
                END IF
             END IF
         CASE (2)       !IT'S RIGHT INTERFACE
             !OUTSIDE INTERPOLATION NEVER CHANGE WITH ITYPE
-            DO I=0,N
-               X2(I)=-DX+I*DX
-               X1(I)=X2(I)                   !(2,0)
+            DO I = 0,N
+               X2(I) = -DX + I * DX
+               X1(I) = X2(I)                 !(2,0)
             END DO
             !INSIDE INTERPOLATION MODIFICATION
             IF (ITYPE .EQ. 2) THEN           !CLOSE TO RIGHT INTERFACE, 4TH FP SAME
                IF (ITYPE2 .EQ. -1) THEN      !FP1 MOVE LEFT, (2,-1)
-                  X1(0)=X1(0)-DX
+                  X1(0) = X1(0) - DX
                END IF
             ELSE                             !CLOSE TO RIGHT INTERFACE, 4TH FP CHANGE, (0,-2)
-               X1(N)=-2.0D0*DX
+               X1(N)= -2.0D0*DX
                IF (ITYPE .EQ. 1) THEN        !FP1 MOVE RIGHT, (1,-2)
-                  X1(N-1)=X1(N-1)+DX
+                  X1(N-1) = X1(N-1) + DX
                END IF
             END IF
          END SELECT
-      ELSE                                 !IRREGULAR POINT
-         DO I=0,N
-            X2(I)=-DX+I*DX
-            X1(I)=X2(I)+DX
+      ELSE                                   !IRREGULAR POINT
+         DO I = 0,N
+            X2(I) = -DX + I * DX
+            X1(I) =  X2(I) + DX
          END DO
-         IF (ITYPE .EQ. -1) THEN           !FP1 MOVE LEFT ONE UNIT
-            X1(0)=X1(0)-DX
-         ELSE IF (ITYPE .EQ. 1) THEN       !FP2 MOVE RIGHT ONE UNIT
-            X2(N)=X2(N)+DX
+         IF (ITYPE .EQ. -1) THEN             !FP1 MOVE LEFT ONE UNIT
+            X1(0) = X1(0) - DX
+         ELSE IF (ITYPE .EQ. 1) THEN         !FP2 MOVE RIGHT ONE UNIT
+            X2(N) = X2(N) + DX
          END IF
       END IF
       CALL WEIGHTS(Z,X1,N,N,ORDER,C1)
       CALL WEIGHTS(Z,X2,N,N,ORDER,C2)
       DO J=0,ORDER
          DO I=0,N
-            WEI(1,I,J)=C1(I,J)
-            WEI(2,I,J)=C2(I,J)
+            WEI(1,I,J) = C1(I,J)
+            WEI(2,I,J) = C2(I,J)
          END DO
       END DO
 
@@ -687,4 +687,3 @@
       !  -----------*---------------*--------------x-*---------------*-------------
       !  ---------------------------O--------------x-*---------------*-------------                 FP1 INTERPOLATION
       !  -----------*---------------*--------------x-----------------O-------------                 FP2 INTERPOLATION
-
