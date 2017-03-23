@@ -6,10 +6,11 @@
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 HOST     = pc
 #PROGRAM  = mib2dll
-#COMPILER = gfortran
-COMPILER = ifort
+COMPILER = gfortran
+#COMPILER=ifort
 VPATH    = ./src
 LIBS     = libs/libarpack.a libs/libslatec.a
+LAPACKS  = -L./lib -lblas -llapack
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 #                    code setups                       #
@@ -18,6 +19,7 @@ LIBS     = libs/libarpack.a libs/libslatec.a
 EXAMPLE  = 5
 SOLVER   = 2
 DT       = 1.0E-6
+NX       = 21
 PROGRAM  = mib2d_e$(EXAMPLE)s$(SOLVER)
 
 #++++++++++++ host and compiler selection +++++++++++++#
@@ -55,7 +57,7 @@ heat2d:$(DATAOBJ) $(MIBOBJ) $(TIMEOBJ) $(MAINOBJ) $(DATA) $(MIB) $(TIME) $(MAIN)
 	#echo $(CFLAG)
 	#echo $(VPATH)
 	#echo $(LIBS)
-	$(COMPILER) $(CFLAG) -o $(PROGRAM) $(DATAOBJ) $(MIBOBJ) $(TIMEOBJ) $(MAINOBJ)
+	$(COMPILER) $(CFLAG) -o $(PROGRAM) $(DATAOBJ) $(MIBOBJ) $(TIMEOBJ) $(MAINOBJ) $(LAPACKS) 
 	@echo "     "
 	@echo ">>> compiled on `hostname -s` with $(COMPILER) <<<"
 	@echo "     "

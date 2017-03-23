@@ -224,6 +224,40 @@
       !    U* = (U^N + U^{N+1})/2 + BETA2 * DT/4 * (U_YY^N - U_YY^{N+1})
       !       = COS(KX)*SIN(KY)*( ( COS(T)+COS(T+DT) )/2 + BETA*DT*VK^2*( COS(T+DT)-COS(T) )/4 )
       !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      SUBROUTINE SETBC_ADID1(T,DT,UHS)
+
+      REAL :: T,DT,UHS(NY,NX)
+
+      REAL :: CT
+      INTEGER :: IX,IY
+
+      DO IX = 1,NX,NX-1    !FIRST ORDER BOUNDARY CONDITION
+         DO IY = 1,NY      !U*=(U^N+ U^{N+1})/2
+            CT = COS(T+DT) + DT * BETA(IY,IX) * VK**2 * ( COS(T+DT) - COS(T) )
+            UHS(IY,IX) = COS( VK*XI(IX) ) * SIN( VK*YI(IY) ) * CT
+         END DO
+      END DO
+
+      DO IY = 1,NY,NY-1
+         DO IX = 1,NX
+            CT = COS(T+DT) + DT * BETA(IY,IX) * VK**2 * ( COS(T+DT) - COS(T) )
+            UHS(IY,IX) = COS( VK*XI(IX) ) * SIN( VK*YI(IY) ) * CT
+         END DO
+      END DO
+
+      END SUBROUTINE SETBC_ADID1
+
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      ! SETBC_ADIPR --
+      !    SET BOUNDARY CONDITION FOR PEACEMAN RACHFORD ADI METHOD
+      ! ARGUMENTS:
+      !    T    IN   CURRENT TIME
+      !    DT   IN   TIME STEP
+      !    UHS  OUT  ON-GRID NUMERICAL SOLUTIONS
+      ! NOTES:
+      !    U* = (U^N + U^{N+1})/2 + BETA2 * DT/4 * (U_YY^N - U_YY^{N+1})
+      !       = COS(KX)*SIN(KY)*( ( COS(T)+COS(T+DT) )/2 + BETA*DT*VK^2*( COS(T+DT)-COS(T) )/4 )
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       SUBROUTINE SETBC_ADIPR(T,DT,UHS)
 
       REAL :: T,DT,UHS(NY,NX)

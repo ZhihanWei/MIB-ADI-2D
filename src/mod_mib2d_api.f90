@@ -285,7 +285,7 @@
                DO I = 1,3
                   DATA%UAUXL(4) = DATA%UAUXL(4) + DATA%WAUXL(I) * UH(DATA%IAUXL(I),DATA%AUXL_AXID)
                END DO
-               DATA%UAUXL(4) = -2.0D0 * DATA%DAUXL * DATA%UAUXL(4)        !TIMES -2*DAUXL
+               DATA%UAUXL(4) = -2.0D0 * DATA%DAUXL * DATA%UAUXL(4)    !TIMES -2*DAUXL
 
                !----- UPPER AUXILIARY VALUES
                IF ( SETS(DATA%AUXR_X,DATA%AUXR_Y) .GT. TOL_SETUP ) THEN !INDICATOR, PT IS IN OMEGA^+ OR OMEGA^-
@@ -304,7 +304,7 @@
                DO I = 1,3
                   DATA%UAUXR(4) = DATA%UAUXR(4) + DATA%WAUXR(I) * UH( DATA%IAUXR(I),DATA%AUXR_AXID )
                END DO
-               DATA%UAUXR(4) = 2.0D0 * DATA%DAUXR * DATA%UAUXR(4)         !TIMES 2*DAUXR
+               DATA%UAUXR(4) = 2.0D0 * DATA%DAUXR * DATA%UAUXR(4)     !TIMES 2*DAUXR
 
                !----- CENTRAL DIFFERENCE FOR CALCULATING U^+_TAU OR U^-_TAU USING 6 SUPPORTING GRIDS
                DTAU = DATA%DAUXL !CENTRAL DIFFERENCE, DATA%DAUXL = DATA%DAUXR
@@ -357,6 +357,43 @@
 
                END IF
 
+               !+++++ TEST THE DIFF. BETWEEN ANA. AND NUM. CALCULATED U_TAU
+!               IF ( (DATA%AXID .EQ. 23 .AND. DATA%ID .EQ. 1) .OR. (DATA%AXID .EQ. 49 .AND. DATA%ID .EQ. 1) ) THEN
+!!                  WRITE(*,*) "RESET JUMPS AT ",DATA%AXID, " FROM ",DATA%JUMP(6)," TO ",DATA%JUMP(5)
+!                  DATA%JUMP(6) = DATA%JUMP(5)
+!               END IF
+!               IF ( (22 .LE. DATA%AXID .AND. DATA%AXID .LE. 50) .OR. (45 .LE. DATA%AXID .AND. DATA%AXID .LE. 50)) THEN
+!                  DATA%JUMP(6) = DATA%JUMP(5)
+!               END IF
+!               IF ( DATA%DAUXL .GE. 1.0D0*DX ) THEN
+!                  DATA%JUMP(6) = DATA%JUMP(5)
+!               END IF
+!               IF (      (DATA%AXID .EQ. 23) &
+!                  & .OR. (DATA%AXID .EQ. 23) &
+!                  & .OR. (DATA%AXID .EQ. 24) &
+!                  & .OR. (DATA%AXID .EQ. 27) &
+!                  & .OR. (DATA%AXID .EQ. 29) &
+!                  & .OR. (DATA%AXID .EQ. 30) &
+!                  & .OR. (DATA%AXID .EQ. 31) &
+!                  & .OR. (DATA%AXID .EQ. 32) &
+!                  & .OR. (DATA%AXID .EQ. 33) &
+!                  & .OR. (DATA%AXID .EQ. 34) &
+!                  & .OR. (DATA%AXID .EQ. 37) &
+!                  & .OR. (DATA%AXID .EQ. 38) &
+!                  & .OR. (DATA%AXID .EQ. 40) &
+!                  & .OR. (DATA%AXID .EQ. 41) &
+!                  & .OR. (DATA%AXID .EQ. 42) &
+!                  & .OR. (DATA%AXID .EQ. 43) &
+!                  & .OR. (DATA%AXID .EQ. 45) &
+!                  & .OR. (DATA%AXID .EQ. 48) &
+!                  & .OR. (DATA%AXID .EQ. 49) &
+!                  & .OR. (DATA%AXID .EQ. 50) &
+!                  & .OR. (DATA%AXID .EQ. 49) ) THEN
+!
+!                  DATA%JUMP(6) = DATA%JUMP(5)
+!
+!               END IF
+
                !----- SAVE DATA TO THE LIST AND MOVE ON TO THE NEXT INTERFACE PT
                CALL LIST_PUT_DATA(ELEM,DATA)
                ELEM => ELEM%NEXT ! NEXT INTERFACE
@@ -378,7 +415,8 @@
                CALL PHI(T+DT,DATA)     !DATA%JUMP(1) = [U]              AT TIME STEP T^{N+1}
                CALL PSI(T+DT,DATA)     !DATA%JUMP(2) = [BETA U_N]       AT TIME STEP T^{N+1}
                CALL PHI_TAU(T+DT,DATA) !DATA%JUMP(3) = [U_TAU]          AT TIME STEP T^{N+1}
-               CALL PSI_BAR(T,DT,DATA) !DATA%JUMP(4) = ANAL. [BEAT U_X] AT TIME STEP T^{N}
+               CALL PSI_BAR(T,DT,DATA) !DATA%JUMP(4) = ANAL. [BEAT U_X] AT TIME STEP T^{N+1}
+                                       !DATA%JUMP(5) = ANAL. [BEAT U_X] AT TIME STEP T^{N}
 
                !----- LEFT AUXILIARY VALUES
                IF (SETS(DATA%AUXL_X,DATA%AUXL_Y) .GT. TOL_SETUP) THEN !INDICATOR, PT IS IN OMEGA^+ OR OMEGA^-
@@ -469,6 +507,30 @@
 
                END IF
 
+               !+++++ TEST THE DIFF. BETWEEN ANA. AND NUM. CALCULATED U_TAU
+!               IF (DATA%AXID .EQ. 34 .OR. DATA%AXID .EQ. 32 .OR. DATA%AXID .EQ. 24) THEN
+!                  WRITE(*,*) "RESET JUMPS AT ",DATA%AXID, " FROM ",DATA%JUMP(6)," TO ",DATA%JUMP(5)
+!                  DATA%JUMP(6) = DATA%JUMP(5)
+!               END IF
+!               IF ( DATA%AXID .EQ. 35 ) THEN
+!                  DATA%JUMP(6) = DATA%JUMP(5)
+!               END IF
+!               IF ( DATA%DAUXL .GE. 1.0D0*DX ) THEN
+!                  DATA%JUMP(6) = DATA%JUMP(5)
+!               END IF
+!               IF (      (DATA%AXID .EQ. 35) &
+!                  & .OR. (DATA%AXID .EQ. 37) &
+!                  & .OR. (DATA%AXID .EQ. 46) &
+!                  & .OR. (DATA%AXID .EQ. 50) &
+!                  & .OR. (DATA%AXID .EQ. 53) &
+!                  & .OR. (DATA%AXID .EQ. 54) &
+!                  & .OR. (DATA%AXID .EQ. 55) &
+!                  & .OR. (DATA%AXID .EQ. 56) ) THEN
+!
+!                  DATA%JUMP(6) = DATA%JUMP(5)
+!
+!               END IF
+
                !----- SAVE DATA TO THE LIST AND MOVE ON TO THE NEXT INTERFACE PT
                CALL LIST_PUT_DATA(ELEM,DATA)
                ELEM => ELEM%NEXT ! NEXT INTERFACE
@@ -542,148 +604,3 @@
       RETURN
 
       END SUBROUTINE WEIGHTS
-
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      ! GETWMIB --
-      !    DIFFERENT WEIGHTS GENERATED BASED ON ITYPE ONLY UES IN MIB PART
-      ! ARGUMENTS:
-      !    Z         IN    INTERFACE LOCATION FOR TWO FPS
-      !    ORDER     IN    DERIVATIVE ORDER OF EXPECTED WEIGHTS
-      !    N         IN    ONE LESS THAN # OF GRID POINTS INVOLVED TO GET WEIGHTS
-      !    IYTPE     IN    CURRENT INTERFACE ITYPE (CAN BE LEFT OR RIGHT INTERFACE)
-      !    ITYPE2    IN    %%OPTIONAL FOR CORNER POINT%% SECOND INTERFACE ITYPE
-      !    WEI       OUT   MODIFIED WEIGHTS FOR NONUNIFORM GRID
-      ! NOTES:
-      !    USED IN SUBROUTINE MIB TO GENERATE WEIGHTS FOR DIFFERENT TYPES OF INTERFACES
-      !    LOCAL ORIGINAL ALWAYS LEFT GRID POINT OF CURRENT INTERFACE
-      ! LIMIT:
-      !    ONLY FOR 3 OR 4 POINTS FOR EACH INTERFACE
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      SUBROUTINE GETWMIB(Z,ORDER,WEI,N,ITYPE,ITYPE2)
-
-      USE MOD_DATA
-
-      INTEGER :: ITYPE,ORDER,N
-      INTEGER,OPTIONAL :: ITYPE2
-      REAL :: WEI(2,0:N,0:ORDER)
-      REAL :: Z
-
-      !FOR CORNER INTERFACE, 1: INTERPOLATION INSIDE, FP1,FP2,FP4; 2: INTERPOLATION OUTSIDE, FP3
-      !FOR IRREGULAR INTERFACE, 1: INTERPOLATION FP1; 2: INTERPOLATION FP2
-      REAL :: X1(0:N),X2(0:N)
-      REAL :: C1(0:N,0:ORDER),C2(0:N,0:ORDER)
-      INTEGER :: KEY,I,J
-
-      IF ( PRESENT(ITYPE2) ) THEN           !CORNER POINT
-         IF (ITYPE .LT. 0) THEN           !(-2,0)&(-2,1)&(-1,2)
-            KEY = 1
-         ELSE IF (ITYPE .GT. 0) THEN      !(2,0)&(2,-1)&(1,-2)
-            KEY = 2
-         ELSE
-            IF (ITYPE2 .LT. 0) THEN       !(0,-2)
-               KEY = 2
-            ELSE                          !(0,2)
-               KEY = 1
-            END IF
-         END IF
-
-         SELECT CASE(KEY)
-         CASE (1)      !IT'S LEFT INTERFACE
-            !OUTSIDE INTERPOLATION NEVER CHANGE WITH ITYPE
-            DO I = 0,N
-               X2(I) = -DX + I * DX
-               X1(I) =  X2(I) + DX        !(0,2)
-            END DO
-            !INSIDE INTERPOLATION MODIFICATION
-            IF (ITYPE .EQ. -2) THEN       !CLOSE TO LEFT INTERFACE, 4TH FP CHANGES, (-2,0)
-               X1(N) = -DX
-               IF (ITYPE2 .EQ. 1) THEN
-                  X1(N-1) = X1(N-1) + DX  !FP3 MOVE RIGHT, (-2,1)
-               END IF
-            ELSE                          !CLOSE TO RIGHT INTERFACE, 4TH FP SAME
-               IF (ITYPE .EQ. -1) THEN    !FP1 MOVE LEFT, (-1,2)
-                  X1(0) = X1(0) - DX
-               END IF
-            END IF
-        CASE (2)       !IT'S RIGHT INTERFACE
-            !OUTSIDE INTERPOLATION NEVER CHANGE WITH ITYPE
-            DO I = 0,N
-               X2(I) = -DX + I * DX
-               X1(I) = X2(I)                 !(2,0)
-            END DO
-            !INSIDE INTERPOLATION MODIFICATION
-            IF (ITYPE .EQ. 2) THEN           !CLOSE TO RIGHT INTERFACE, 4TH FP SAME
-               IF (ITYPE2 .EQ. -1) THEN      !FP1 MOVE LEFT, (2,-1)
-                  X1(0) = X1(0) - DX
-               END IF
-            ELSE                             !CLOSE TO RIGHT INTERFACE, 4TH FP CHANGE, (0,-2)
-               X1(N)= -2.0D0*DX
-               IF (ITYPE .EQ. 1) THEN        !FP1 MOVE RIGHT, (1,-2)
-                  X1(N-1) = X1(N-1) + DX
-               END IF
-            END IF
-         END SELECT
-      ELSE                                   !IRREGULAR POINT
-         DO I = 0,N
-            X2(I) = -DX + I * DX
-            X1(I) =  X2(I) + DX
-         END DO
-         IF (ITYPE .EQ. -1) THEN             !FP1 MOVE LEFT ONE UNIT
-            X1(0) = X1(0) - DX
-         ELSE IF (ITYPE .EQ. 1) THEN         !FP2 MOVE RIGHT ONE UNIT
-            X2(N) = X2(N) + DX
-         END IF
-      END IF
-      CALL WEIGHTS(Z,X1,N,N,ORDER,C1)
-      CALL WEIGHTS(Z,X2,N,N,ORDER,C2)
-      DO J=0,ORDER
-         DO I=0,N
-            WEI(1,I,J) = C1(I,J)
-            WEI(2,I,J) = C2(I,J)
-         END DO
-      END DO
-
-      RETURN
-      END SUBROUTINE GETWMIB
-
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      !  GRAPH EXPLAINATION FOR DIFFERENT SITUATION USED IN MIB
-      !  -------- : MESH LINES
-      !      *    : REAL POINTS
-      !      O    : FP
-      !      x    : INTERFACE
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  CORNER LEFT INTERFACE  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~     (ITYPE,ITYPE2)
-      !  ---------*---------------*-------x--------*--------x-------*---------------*----------
-      !  OUTSIDE INTERPOLATION, X2
-      !  ---------*---------------*-------x--------O--------x-------*--------------------------
-      !  INSIDE INTERPOLATION, X1
-      !  ---------O---------------O---x------------*--------x-------O--------------------------     ( -2 , 0 )
-      !  ---------O---------------O---x------------*--------------x-----------------O----------     ( -2 , 1 )
-      !  -------------------------O-------x--------*------------x---O---------------O----------     (  0 , 2 )
-      !  ---------O-----------------x--------------*------------x---O---------------O----------     ( -1 , 2 )
-
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  CORNER RIGHT INTERFACE  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~     (ITYPE,ITYPE2)
-      !  ---------*---------------*-------x--------*--------x-------*---------------*----------
-      !  OUTSIDE INTERPOLATION, X2
-      !  -------------------------*-------x--------O--------x-------*---------------*----------
-      !  INSIDE INTERPOLATION, X1
-      !  ---------O---------------O---x------------*--------x-------O--------------------------     ( 0 , -2 )
-      !  ---------O---------------O---x------------*--------------x-----------------O----------     ( 1 , -2 )
-      !  -------------------------O-------x--------*------------x---O---------------O----------     ( 2 ,  0 )
-      !  ---------O-----------------x--------------*------------x---O---------------O----------     ( 2 , -1 )
-
-      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  IRREGULAR INTERFACE  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      !  ITYPE == 0
-      !  -----------*---------------*--------x-------*---------------*-------------
-      !  ---------------------------O--------x-------*---------------*-------------                 FP1 INTERPOLATION
-      !  -----------*---------------*--------x-------O-----------------------------                 FP2 INTERPOLATION
-      !  ITYPE == -1
-      !  -----------*---------------*-x--------------*---------------*-------------
-      !  -----------O-----------------x--------------*---------------*-------------                 FP1 INTERPOLATION
-      !  -----------*---------------*-x--------------O-----------------------------                 FP2 INTERPOLATION
-      !  ITYPE == 1
-      !  -----------*---------------*--------------x-*---------------*-------------
-      !  ---------------------------O--------------x-*---------------*-------------                 FP1 INTERPOLATION
-      !  -----------*---------------*--------------x-----------------O-------------                 FP2 INTERPOLATION

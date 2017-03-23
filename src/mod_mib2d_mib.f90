@@ -376,7 +376,152 @@
 
       END SUBROUTINE CMIB1D
 
-            !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      ! GETWMIB --
+      !    DIFFERENT WEIGHTS GENERATED BASED ON ITYPE ONLY UES IN MIB PART
+      ! ARGUMENTS:
+      !    Z         IN    INTERFACE LOCATION FOR TWO FPS
+      !    ORDER     IN    DERIVATIVE ORDER OF EXPECTED WEIGHTS
+      !    N         IN    ONE LESS THAN # OF GRID POINTS INVOLVED TO GET WEIGHTS
+      !    IYTPE     IN    CURRENT INTERFACE ITYPE (CAN BE LEFT OR RIGHT INTERFACE)
+      !    ITYPE2    IN    %%OPTIONAL FOR CORNER POINT%% SECOND INTERFACE ITYPE
+      !    WEI       OUT   MODIFIED WEIGHTS FOR NONUNIFORM GRID
+      ! NOTES:
+      !    USED IN SUBROUTINE MIB TO GENERATE WEIGHTS FOR DIFFERENT TYPES OF INTERFACES
+      !    LOCAL ORIGINAL ALWAYS LEFT GRID POINT OF CURRENT INTERFACE
+      ! LIMIT:
+      !    ONLY FOR 3 OR 4 POINTS FOR EACH INTERFACE
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      SUBROUTINE GETWMIB(Z,ORDER,WEI,N,ITYPE,ITYPE2)
+
+      USE MOD_DATA
+
+      INTEGER :: ITYPE,ORDER,N
+      INTEGER,OPTIONAL :: ITYPE2
+      REAL :: WEI(2,0:N,0:ORDER)
+      REAL :: Z
+
+      !FOR CORNER INTERFACE,    1: INTERPOLATION INSIDE, FP1,FP2,FP4; 2: INTERPOLATION OUTSIDE, FP3
+      !FOR IRREGULAR INTERFACE, 1: INTERPOLATION FP1; 2: INTERPOLATION FP2
+      REAL :: X1(0:N),X2(0:N)
+      REAL :: C1(0:N,0:ORDER),C2(0:N,0:ORDER)
+      INTEGER :: KEY,I,J
+
+      IF ( PRESENT(ITYPE2) ) THEN           !CORNER POINT
+         IF (ITYPE .LT. 0) THEN           !(-2,0)&(-2,1)&(-1,2)
+            KEY = 1
+         ELSE IF (ITYPE .GT. 0) THEN      !(2,0)&(2,-1)&(1,-2)
+            KEY = 2
+         ELSE
+            IF (ITYPE2 .LT. 0) THEN       !(0,-2)
+               KEY = 2
+            ELSE                          !(0,2)
+               KEY = 1
+            END IF
+         END IF
+
+         SELECT CASE(KEY)
+         CASE (1)      !IT'S LEFT INTERFACE
+            !OUTSIDE INTERPOLATION NEVER CHANGE WITH ITYPE
+            DO I = 0,N
+               X2(I) = -DX + I * DX
+               X1(I) =  X2(I) + DX        !(0,2)
+            END DO
+            !INSIDE INTERPOLATION MODIFICATION
+            IF (ITYPE .EQ. -2) THEN       !CLOSE TO LEFT INTERFACE, 4TH FP CHANGES, (-2,0)
+               X1(N) = -DX
+               IF (ITYPE2 .EQ. 1) THEN
+                  X1(N-1) = X1(N-1) + DX  !FP3 MOVE RIGHT, (-2,1)
+               END IF
+            ELSE                          !CLOSE TO RIGHT INTERFACE, 4TH FP SAME
+               IF (ITYPE .EQ. -1) THEN    !FP1 MOVE LEFT, (-1,2)
+                  X1(0) = X1(0) - DX
+               END IF
+            END IF
+        CASE (2)       !IT'S RIGHT INTERFACE
+            !OUTSIDE INTERPOLATION NEVER CHANGE WITH ITYPE
+            DO I = 0,N
+               X2(I) = -DX + I * DX
+               X1(I) = X2(I)                 !(2,0)
+            END DO
+            !INSIDE INTERPOLATION MODIFICATION
+            IF (ITYPE .EQ. 2) THEN           !CLOSE TO RIGHT INTERFACE, 4TH FP SAME
+               IF (ITYPE2 .EQ. -1) THEN      !FP1 MOVE LEFT, (2,-1)
+                  X1(0) = X1(0) - DX
+               END IF
+            ELSE                             !CLOSE TO RIGHT INTERFACE, 4TH FP CHANGE, (0,-2)
+               X1(N)= -2.0D0*DX
+               IF (ITYPE .EQ. 1) THEN        !FP1 MOVE RIGHT, (1,-2)
+                  X1(N-1) = X1(N-1) + DX
+               END IF
+            END IF
+         END SELECT
+      ELSE                                   !IRREGULAR POINT
+         DO I = 0,N
+            X2(I) = -DX + I * DX
+            X1(I) =  X2(I) + DX
+         END DO
+         IF (ITYPE .EQ. -1) THEN             !FP1 MOVE LEFT ONE UNIT
+            X1(0) = X1(0) - DX
+         ELSE IF (ITYPE .EQ. 1) THEN         !FP2 MOVE RIGHT ONE UNIT
+            X2(N) = X2(N) + DX
+         END IF
+      END IF
+      CALL WEIGHTS(Z,X1,N,N,ORDER,C1)
+      CALL WEIGHTS(Z,X2,N,N,ORDER,C2)
+      DO J=0,ORDER
+         DO I=0,N
+            WEI(1,I,J) = C1(I,J)
+            WEI(2,I,J) = C2(I,J)
+         END DO
+      END DO
+
+      RETURN
+      END SUBROUTINE GETWMIB
+
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      !  GRAPH EXPLAINATION FOR DIFFERENT SITUATION USED IN MIB
+      !  -------- : MESH LINES
+      !      *    : REAL POINTS
+      !      O    : FP
+      !      x    : INTERFACE
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  CORNER LEFT INTERFACE  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~     (ITYPE,ITYPE2)
+      !  ---------*---------------*-------x--------*--------x-------*---------------*----------
+      !  OUTSIDE INTERPOLATION, X2
+      !  ---------*---------------*-------x--------O--------x-------*--------------------------
+      !  INSIDE INTERPOLATION, X1
+      !  ---------O---------------O---x------------*--------x-------O--------------------------     ( -2 , 0 )
+      !  ---------O---------------O---x------------*--------------x-----------------O----------     ( -2 , 1 )
+      !  -------------------------O-------x--------*------------x---O---------------O----------     (  0 , 2 )
+      !  ---------O-----------------x--------------*------------x---O---------------O----------     ( -1 , 2 )
+
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  CORNER RIGHT INTERFACE  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~     (ITYPE,ITYPE2)
+      !  ---------*---------------*-------x--------*--------x-------*---------------*----------
+      !  OUTSIDE INTERPOLATION, X2
+      !  -------------------------*-------x--------O--------x-------*---------------*----------
+      !  INSIDE INTERPOLATION, X1
+      !  ---------O---------------O---x------------*--------x-------O--------------------------     ( 0 , -2 )
+      !  ---------O---------------O---x------------*--------------x-----------------O----------     ( 1 , -2 )
+      !  -------------------------O-------x--------*------------x---O---------------O----------     ( 2 ,  0 )
+      !  ---------O-----------------x--------------*------------x---O---------------O----------     ( 2 , -1 )
+
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  IRREGULAR INTERFACE  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      !  ITYPE == 0
+      !  -----------*---------------*--------x-------*---------------*-------------
+      !  ---------------------------O--------x-------*---------------*-------------                 FP1 INTERPOLATION
+      !  -----------*---------------*--------x-------O-----------------------------                 FP2 INTERPOLATION
+      !  ITYPE == -1
+      !  -----------*---------------*-x--------------*---------------*-------------
+      !  -----------O-----------------x--------------*---------------*-------------                 FP1 INTERPOLATION
+      !  -----------*---------------*-x--------------O-----------------------------                 FP2 INTERPOLATION
+      !  ITYPE == 1
+      !  -----------*---------------*--------------x-*---------------*-------------
+      !  ---------------------------O--------------x-*---------------*-------------                 FP1 INTERPOLATION
+      !  -----------*---------------*--------------x-----------------O-------------                 FP2 INTERPOLATION
+
+      !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       ! TEST_MIB1D --
       !
       ! ARGUMENTS:

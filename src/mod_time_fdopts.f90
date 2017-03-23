@@ -75,7 +75,7 @@
                ELSE
                   I = 0 ! CENTRAL DIFF.
                END IF
-               ROW(1,1) = - COEF * VDE2(I,-1)                     !1ST COFF. IN THE CENTRAL DIFF.
+               ROW(1,1) = -COEF * VDE2(I,-1)                      !1ST COFF. IN THE CENTRAL DIFF.
                ROW(1,2) =  1.0D0/BETA(IY,IX) - COEF * VDE2(I, 0)  !2ND COFF. IN THE CENTRAL DIFF.
                DO K=1,4
                   ROW(1,K) = ROW(1,K) - COEF * VDE2(I,1) * DATA%WIJ(2,K)

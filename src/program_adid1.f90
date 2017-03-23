@@ -1,8 +1,8 @@
-      PROGRAM HEAT2D_ADIPR_MIB2D
+      PROGRAM HEAT2D_ADID1_MIB2D
 
       USE MOD_DATA
       USE MOD_MIB2D, ONLY : SETUP,FPSETUP,SETJUMPS,TEST_MIB1D,TEST_CMIB1D
-      USE MOD_TIME_STEPPER, ONLY : ADIPR
+      USE MOD_TIME_STEPPER, ONLY : ADID1
 
       IMPLICIT NONE
 
@@ -26,31 +26,31 @@
 
       IF (TESTCASE .EQ. 1) THEN
          WRITE(*,*) " "
-         WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <DISC_EX1> WITH METHOD <ADIPR> -----"
+         WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <DISC_EX1> WITH METHOD <ADID1> -----"
          WRITE(*,*) " "
       ELSE IF (TESTCASE .EQ. 2) THEN
          WRITE(*,*) " "
-         WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <DISC_EX2> WITH METHOD <ADIPR> -----"
+         WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <DISC_EX2> WITH METHOD <ADID1> -----"
          WRITE(*,*) " "
       ELSE IF (TESTCASE .EQ. 3) THEN
          WRITE(*,*) " "
-         WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <DISC_EX3> WITH METHOD <ADIPR> -----"
+         WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <DISC_EX3> WITH METHOD <ADID1> -----"
          WRITE(*,*) " "
       ELSE IF (TESTCASE .EQ. 4) THEN
          WRITE(*,*) " "
-         WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <STAR_EX4> WITH METHOD <ADIPR> -----"
+         WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <STAR_EX4> WITH METHOD <ADID1> -----"
          WRITE(*,*) " "
       ELSE IF (TESTCASE .EQ. 5) THEN
          WRITE(*,*) " "
-         WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <STAR_EX5> WITH METHOD <ADIPR> -----"
+         WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <STAR_EX5> WITH METHOD <ADID1> -----"
          WRITE(*,*) " "
       ELSE IF (TESTCASE .EQ. 6) THEN
          WRITE(*,*) " "
-         WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <STAR_EX6> WITH METHOD <ADIPR> -----"
+         WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <STAR_EX6> WITH METHOD <ADID1> -----"
          WRITE(*,*) " "
       ELSE IF (TESTCASE .EQ. 7) THEN
          WRITE(*,*) " "
-         WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <STAR_EX7> WITH METHOD <ADIPR> -----"
+         WRITE(*,"(A,I2,A)") "----- SOLVING EXAMPLE <STAR_EX7> WITH METHOD <ADID1> -----"
          WRITE(*,*) " "
       ELSE
          WRITE(*,*) " "
@@ -73,7 +73,7 @@
       SRC   = 0.0D0
       BETA  = 0.0D0; BETAX = 0.0D0; BETAY = 0.0D0
       TOL_ITYPE = 0.0D0
-      !TOL_ITYPE = 1.0D0*DX
+      !TOL_ITYPE = .0D-1*DX
 
       CALL SETUP !Initial setup
 
@@ -167,7 +167,7 @@
                CALL TEST_ALLIFPS(T)
             END IF
 
-            CALL ADIPR(T,DT,UH)
+            CALL ADID1(T,DT,UH)
             T = T + DT
          END DO !----- END OF ILOOP = 1,NLOOP
 
@@ -180,4 +180,4 @@
 
       DEALLOCATE(U,UH,STAT=ierr)
 
-      END PROGRAM HEAT2D_ADIPR_MIB2D
+      END PROGRAM HEAT2D_ADID1_MIB2D

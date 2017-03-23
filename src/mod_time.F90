@@ -23,12 +23,12 @@
 
       CONTAINS
 
-      INCLUDE "mod_time_fdopts.f90"    !FINITE DIFF. OPERATORS FOR D_XX AND D_YY WITH MIB
-      INCLUDE "mod_time_adi.f90"       !SHARD COMMON SUBROUTINES BY ADI-TYPE METHODS
-      INCLUDE "mod_time_adid1.f90"     !DOUGLAS ADI
-      INCLUDE "mod_time_adiprnew.f90"  !PEACEMAN RACHFORD ADI
-!     INCLUDE "mod_time_ie.f90"        !IMPLICIT EULER
-!     INCLUDE "mod_time_cn.f90"        !CRANK-NICOLSON
-!     INCLUDE "mod_time_stability.f90" !STABILITY ANALYSIS VIA PRINCIPLE EIGENVALUE
+      INCLUDE "mod_time_fdopts.f90"         !FINITE DIFF. OPERATORS FOR D_XX AND D_YY WITH MIB
+      INCLUDE "mod_time_adi.f90"            !SHARD COMMON SUBROUTINES BY ADI-TYPE METHODS
+      INCLUDE "mod_time_adid1_thomas.f90"   !DOUGLAS ADI
+      INCLUDE "mod_time_adipr_sgtsvx.f90"  !PEACEMAN RACHFORD ADI
+!     INCLUDE "mod_time_ie.f90"             !IMPLICIT EULER
+!     INCLUDE "mod_time_cn.f90"             !CRANK-NICOLSON
+!     INCLUDE "mod_time_stability.f90"      !STABILITY ANALYSIS VIA PRINCIPLE EIGENVALUE
 
       END MODULE MOD_TIME_STEPPER

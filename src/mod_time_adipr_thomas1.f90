@@ -17,6 +17,8 @@
       REAL,ALLOCATABLE :: WTYPE1(:,:),WTYPE2(:,:)       ! FOR IRREGULAR INTERFACE
       REAL :: WTYPE(-1:1),WTYPEC1(-1:1),WTYPEC2(-1:1)                                     
 
+      !CALL SETJUMPS(T,DT,UH)
+
       !INITIALIZE GEBERAL WEIGHTS OF 1ST&2ND ORDER
       CALL GETWTYPE(0,1,VDE1,1)
       CALL GETWTYPE(0,2,VDE2,1)
@@ -29,6 +31,7 @@
       !                    = DT/2 D_YY U^N + (U^N + DT/2 SRC^{N+1/2})/BETA + DT/2 BETA_Y/BETA D_Y U^N
       !
       !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
       CALL SETSRC(T+DT/2.0D0)  !SET SOURCE SRC(IY,IX) AT TIME T_{N+1/2}
 
       ALLOCATE(A(NX),B(NX),C(NX),R(NX),UT(NX),STAT=ierr)
